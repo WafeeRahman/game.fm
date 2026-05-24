@@ -1,0 +1,39 @@
+import Link from "next/link";
+import Image from "next/image";
+import { igdbImageUrl } from "@/lib/igdb";
+
+export default function GameCard({ game }) {
+  const coverUrl = igdbImageUrl(game.cover?.image_id, "cover_big");
+  const year = game.first_release_date
+    ? new Date(game.first_release_date * 1000).getFullYear()
+    : null;
+
+  return (
+    <Link href={`/games/${game.slug}`} className="group flex flex-col gap-2">
+      {/* Cover art */}
+      <div className="relative aspect-[3/4] rounded-lg overflow-hidden bg-white/5 border border-white/10 group-hover:border-violet-500/50 transition-colors">
+        {coverUrl ? (
+          <Image
+            src={coverUrl}
+            alt={game.name}
+            fill
+            className="object-cover group-hover:scale-105 transition-transform duration-300"
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 200px"
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center text-white/20 text-xs text-center px-2">
+            No cover
+          </div>
+        )}
+      </div>
+
+      {/* Info */}
+      <div>
+        <p className="text-sm font-medium text-white leading-snug line-clamp-2 group-hover:text-violet-300 transition-colors">
+          {game.name}
+        </p>
+        {year && <p className="text-xs text-white/40 mt-0.5">{year}</p>}
+      </div>
+    </Link>
+  );
+}
