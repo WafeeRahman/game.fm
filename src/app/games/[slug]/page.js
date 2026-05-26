@@ -1,6 +1,9 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
+import { auth } from "@/auth";
 import { getGameBySlug, igdbImageUrl } from "@/lib/igdb";
+import { prisma } from "@/lib/db";
+import LogGameButton from "@/components/LogGameButton";
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
@@ -11,9 +14,24 @@ export async function generateMetadata({ params }) {
 
 export default async function GamePage({ params }) {
   const { slug } = await params;
-  const game = await getGameBySlug(slug);
+
+  const [game, session] = await Promise.all([
+    getGameBySlug(slug),
+    auth(),
+  ]);
 
   if (!game) notFound();
+
+  // If the user is logged in, check if they've already logged this game
+  let existingLog = null;
+  if (session?.user) {
+    const dbGame = await prisma.game.findUnique({ where: { igdbId: game.id } });
+    if (dbGame) {
+      existingLog = await prisma.gameLog.findUnique({
+        where: { userId_gameId: { userId: session.user.id, gameId: dbGame.id } },
+      });
+    }
+  }
 
   const coverUrl = igdbImageUrl(game.cover?.image_id, "cover_big");
   const releaseYear = game.first_release_date
@@ -100,14 +118,18 @@ export default async function GamePage({ params }) {
             )}
           </div>
 
-          {/* TODO: Log game button — coming in commit 7 */}
+          {/* Log game */}
           <div className="mt-2">
-            <button
-              disabled
-              className="bg-violet-600/50 text-white/50 text-sm px-4 py-2 rounded-lg cursor-not-allowed"
-            >
-              Log this game (coming soon)
-            </button>
+            {session?.user ? (
+              <LogGameButton igdbId={game.id} existingLog={existingLog} />
+            ) : (
+              <a
+                href="/api/auth/signin"
+                className="text-sm bg-violet-600 hover:bg-violet-500 text-white px-4 py-2 rounded-lg transition-colors inline-block"
+              >
+                Sign in to log this game
+              </a>
+            )}
           </div>
         </div>
       </div>
