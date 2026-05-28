@@ -24,6 +24,11 @@ export default async function Navbar() {
               Profile
             </Link>
           )}
+          {user && (
+            <Link href="/settings" className="hover:text-white transition-colors">
+              Settings
+            </Link>
+          )}
         </div>
 
         {/* Auth */}

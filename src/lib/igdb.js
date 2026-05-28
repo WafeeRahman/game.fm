@@ -96,6 +96,28 @@ export async function getGameById(igdbId) {
   return results[0] ?? null;
 }
 
+// Batch-lookup IGDB games by their Steam AppIDs using the external_games endpoint.
+// Returns an array of { uid (steamAppId), game } objects.
+// Call in chunks of 100 to stay well within rate limits.
+export async function getGamesBySteamIds(steamAppIds) {
+  if (steamAppIds.length === 0) return [];
+  const uidList = steamAppIds.map((id) => `"${id}"`).join(",");
+  return igdbFetch(
+    "external_games",
+    `
+    fields uid,
+           game.id, game.name, game.slug, game.cover.image_id,
+           game.first_release_date, game.genres.name, game.platforms.name,
+           game.summary, game.total_rating,
+           game.involved_companies.company.name,
+           game.involved_companies.developer,
+           game.involved_companies.publisher;
+    where external_game_source = 1 & uid = (${uidList});
+    limit 500;
+  `
+  );
+}
+
 // Get popular/trending games — used for the homepage
 export async function getPopularGames(limit = 20) {
   return igdbFetch(
