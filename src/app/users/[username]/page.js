@@ -3,6 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { getUserProfile, getTotalPlaytime } from "@/lib/users";
+import { prisma } from "@/lib/db";
+import FollowButton from "@/components/FollowButton";
 
 export async function generateMetadata({ params }) {
   const { username } = await params;
@@ -20,6 +22,18 @@ export default async function UserProfilePage({ params }) {
   if (!user) notFound();
 
   const isOwnProfile = session?.user?.id === user.id;
+
+  // Check if the logged-in user already follows this profile
+  const isFollowing = !isOwnProfile && session?.user
+    ? !!(await prisma.follow.findUnique({
+        where: {
+          followerId_followingId: {
+            followerId: session.user.id,
+            followingId: user.id,
+          },
+        },
+      }))
+    : false;
   const totalMins = await getTotalPlaytime(user.id);
   const totalHours = Math.floor(totalMins / 60);
 
@@ -57,6 +71,9 @@ export default async function UserProfilePage({ params }) {
               >
                 Edit profile
               </Link>
+            )}
+            {!isOwnProfile && session?.user && (
+              <FollowButton username={username} initialFollowing={isFollowing} />
             )}
           </div>
 
