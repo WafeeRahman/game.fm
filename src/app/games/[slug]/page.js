@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { getGameBySlug, igdbImageUrl } from "@/lib/igdb";
 import { prisma } from "@/lib/db";
 import LogGameButton from "@/components/LogGameButton";
+import AddToListButton from "@/components/AddToListButton";
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
@@ -23,13 +24,39 @@ export default async function GamePage({ params }) {
   if (!game) notFound();
 
   // If the user is logged in, check if they've already logged this game
+  // and fetch their lists (with membership state for this game)
   let existingLog = null;
+  let userLists = [];
   if (session?.user) {
     const dbGame = await prisma.game.findUnique({ where: { igdbId: game.id } });
     if (dbGame) {
-      existingLog = await prisma.gameLog.findUnique({
-        where: { userId_gameId: { userId: session.user.id, gameId: dbGame.id } },
+      [existingLog] = await Promise.all([
+        prisma.gameLog.findUnique({
+          where: { userId_gameId: { userId: session.user.id, gameId: dbGame.id } },
+        }),
+      ]);
+
+      const rawLists = await prisma.list.findMany({
+        where: { userId: session.user.id },
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          name: true,
+          items: {
+            where: { gameId: dbGame.id },
+            select: { id: true },
+          },
+        },
       });
+      userLists = rawLists.map((l) => ({ id: l.id, name: l.name, hasGame: l.items.length > 0 }));
+    } else {
+      // Game not in DB yet — still fetch lists so the user can create one
+      const rawLists = await prisma.list.findMany({
+        where: { userId: session.user.id },
+        orderBy: { createdAt: "desc" },
+        select: { id: true, name: true },
+      });
+      userLists = rawLists.map((l) => ({ id: l.id, name: l.name, hasGame: false }));
     }
   }
 
@@ -118,10 +145,13 @@ export default async function GamePage({ params }) {
             )}
           </div>
 
-          {/* Log game */}
-          <div className="mt-2">
+          {/* Log game + list actions */}
+          <div className="mt-2 flex flex-wrap items-center gap-2">
             {session?.user ? (
-              <LogGameButton igdbId={game.id} existingLog={existingLog} />
+              <>
+                <LogGameButton igdbId={game.id} existingLog={existingLog} />
+                <AddToListButton igdbId={game.id} initialLists={userLists} />
+              </>
             ) : (
               <a
                 href="/api/auth/signin"

@@ -97,6 +97,17 @@ export default async function UserProfilePage({ params }) {
         ))}
       </div>
 
+      {/* Profile nav */}
+      <div className="flex items-center gap-4 mb-8 border-b border-white/5 pb-4">
+        <span className="text-sm text-white border-b-2 border-violet-500 pb-4 -mb-4">Games</span>
+        <Link
+          href={`/users/${username}/lists`}
+          className="text-sm text-white/40 hover:text-white transition-colors pb-4 -mb-4"
+        >
+          Lists
+        </Link>
+      </div>
+
       {/* Favourite games — 4 slots like Letterboxd */}
       <section className="mb-10">
         <h2 className="text-sm font-semibold text-white/50 uppercase tracking-wider mb-4">
