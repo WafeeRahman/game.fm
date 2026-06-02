@@ -5,6 +5,7 @@ import { getGameBySlug, igdbImageUrl } from "@/lib/igdb";
 import { prisma } from "@/lib/db";
 import LogGameButton from "@/components/LogGameButton";
 import AddToListButton from "@/components/AddToListButton";
+import LogSessionButton from "@/components/LogSessionButton";
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
@@ -72,94 +73,112 @@ export default async function GamePage({ params }) {
   const platforms = game.platforms?.map((p) => p.name) ?? [];
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-10">
-      <div className="flex flex-col md:flex-row gap-8">
-        {/* Cover */}
-        <div className="flex-shrink-0">
-          <div className="relative w-48 md:w-56 aspect-[3/4] rounded-xl overflow-hidden bg-white/5 border border-white/10">
-            {coverUrl ? (
-              <Image
-                src={coverUrl}
-                alt={game.name}
-                fill
-                className="object-cover"
-                priority
-              />
-            ) : (
-              <div className="absolute inset-0 flex items-center justify-center text-white/20 text-xs">
-                No cover
-              </div>
-            )}
-          </div>
+    <div className="relative">
+      {/* Blurred cover background */}
+      {coverUrl && (
+        <div className="absolute inset-0 h-96 overflow-hidden pointer-events-none">
+          <Image
+            src={coverUrl}
+            alt=""
+            fill
+            className="object-cover blur-3xl opacity-15 scale-110"
+            priority
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-neutral-950/60 to-neutral-950" />
         </div>
+      )}
 
-        {/* Info */}
-        <div className="flex flex-col gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-white">{game.name}</h1>
-            <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-white/50">
-              {releaseYear && <span>{releaseYear}</span>}
-              {developer && <span>· {developer}</span>}
-              {rating && (
-                <span className="text-violet-400 font-medium">
-                  ★ {rating}/100
-                </span>
+      <div className="relative max-w-6xl mx-auto px-4 py-10">
+        <div className="flex flex-col md:flex-row gap-8">
+          {/* Cover */}
+          <div className="flex-shrink-0">
+            <div className="relative w-44 md:w-52 aspect-[3/4] rounded-xl overflow-hidden bg-white/5 border border-white/10 shadow-2xl">
+              {coverUrl ? (
+                <Image
+                  src={coverUrl}
+                  alt={game.name}
+                  fill
+                  className="object-cover"
+                  priority
+                />
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center text-white/20 text-xs">
+                  No cover
+                </div>
               )}
             </div>
           </div>
 
-          {/* Genres */}
-          {genres.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {genres.map((g) => (
-                <span
-                  key={g}
-                  className="text-xs bg-white/5 border border-white/10 text-white/60 px-2.5 py-1 rounded-full"
-                >
-                  {g}
-                </span>
-              ))}
+          {/* Info */}
+          <div className="flex flex-col gap-4 pt-2">
+            <div>
+              <h1 className="text-3xl font-bold text-white tracking-tight">{game.name}</h1>
+              <div className="flex flex-wrap items-center gap-2 mt-2 text-sm text-white/50">
+                {releaseYear && <span>{releaseYear}</span>}
+                {developer && <><span className="text-white/20">·</span><span>{developer}</span></>}
+                {rating && (
+                  <>
+                    <span className="text-white/20">·</span>
+                    <span className="text-violet-400 font-medium">★ {rating}/100</span>
+                  </>
+                )}
+              </div>
             </div>
-          )}
 
-          {/* Summary */}
-          {game.summary && (
-            <p className="text-sm text-white/70 leading-relaxed max-w-2xl">
-              {game.summary}
-            </p>
-          )}
-
-          {/* Metadata */}
-          <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm mt-2">
-            {publisher && (
-              <div>
-                <span className="text-white/30">Publisher</span>
-                <p className="text-white/80">{publisher}</p>
+            {/* Genres */}
+            {genres.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {genres.map((g) => (
+                  <span
+                    key={g}
+                    className="text-xs bg-white/5 border border-white/10 text-white/50 px-2.5 py-1 rounded-full"
+                  >
+                    {g}
+                  </span>
+                ))}
               </div>
             )}
-            {platforms.length > 0 && (
-              <div>
-                <span className="text-white/30">Platforms</span>
-                <p className="text-white/80">{platforms.slice(0, 4).join(", ")}</p>
-              </div>
-            )}
-          </div>
 
-          {/* Log game + list actions */}
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            {session?.user ? (
-              <>
-                <LogGameButton igdbId={game.id} existingLog={existingLog} />
-                <AddToListButton igdbId={game.id} initialLists={userLists} />
-              </>
-            ) : (
-              <a
-                href="/api/auth/signin"
-                className="text-sm bg-violet-600 hover:bg-violet-500 text-white px-4 py-2 rounded-lg transition-colors inline-block"
-              >
-                Sign in to log this game
-              </a>
+            {/* Summary */}
+            {game.summary && (
+              <p className="text-sm text-white/60 leading-relaxed max-w-2xl">
+                {game.summary}
+              </p>
             )}
+
+            {/* Metadata */}
+            <div className="flex flex-wrap gap-x-8 gap-y-2 text-sm">
+              {publisher && (
+                <div>
+                  <p className="text-xs text-white/30 mb-0.5">Publisher</p>
+                  <p className="text-white/70">{publisher}</p>
+                </div>
+              )}
+              {platforms.length > 0 && (
+                <div>
+                  <p className="text-xs text-white/30 mb-0.5">Platforms</p>
+                  <p className="text-white/70">{platforms.slice(0, 4).join(", ")}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              {session?.user ? (
+                <>
+                  <LogGameButton igdbId={game.id} existingLog={existingLog} />
+                  <LogSessionButton igdbId={game.id} />
+                  <AddToListButton igdbId={game.id} initialLists={userLists} />
+                </>
+              ) : (
+                <a
+                  href="/api/auth/signin"
+                  className="text-sm bg-violet-600 hover:bg-violet-500 text-white px-4 py-2 rounded-lg transition-colors inline-block"
+                >
+                  Sign in to log this game
+                </a>
+              )}
+            </div>
           </div>
         </div>
       </div>

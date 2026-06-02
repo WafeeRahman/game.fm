@@ -39,19 +39,31 @@ export default async function UserListsPage({ params }) {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-10">
-      {/* Breadcrumb header */}
+      {/* Profile header (condensed) */}
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-xl font-bold text-white">
+        <div>
           <Link
             href={`/users/${username}`}
-            className="text-white/40 hover:text-white transition-colors"
+            className="text-sm text-white/40 hover:text-white/70 transition-colors"
           >
-            {username}
+            ← {username}
           </Link>
-          <span className="text-white/20 mx-2">/</span>
-          Lists
-        </h1>
+          <h1 className="text-xl font-bold text-white mt-1">Lists</h1>
+        </div>
         {isOwnProfile && <CreateListButton />}
+      </div>
+
+      {/* Nav tabs */}
+      <div className="flex border-b border-white/10 mb-8">
+        <Link
+          href={`/users/${username}`}
+          className="px-1 pb-3 mr-6 text-sm text-white/40 hover:text-white border-b-2 border-transparent hover:border-white/20 transition-colors translate-y-px"
+        >
+          Games
+        </Link>
+        <span className="px-1 pb-3 text-sm font-medium text-white border-b-2 border-violet-500 translate-y-px">
+          Lists
+        </span>
       </div>
 
       {lists.length === 0 ? (

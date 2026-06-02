@@ -48,26 +48,25 @@ export default async function ListDetailPage({ params }) {
   const isOwner = session?.user?.id === list.userId;
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-10">
+    <div className="max-w-5xl mx-auto px-4 py-10">
       {/* Header */}
-      <div className="flex items-start justify-between mb-8">
+      <div className="flex items-start justify-between mb-10">
         <div>
-          <h1 className="text-2xl font-bold text-white">{list.name}</h1>
-          <p className="text-sm text-white/40 mt-1">
-            <Link
-              href={`/users/${username}`}
-              className="hover:text-white transition-colors"
-            >
+          <p className="text-xs text-white/30 mb-2 uppercase tracking-widest">
+            <Link href={`/users/${username}`} className="hover:text-white/60 transition-colors">
               {username}
             </Link>
-            <span className="mx-1.5">·</span>
+            {" / "}List
+          </p>
+          <h1 className="text-3xl font-bold text-white tracking-tight">{list.name}</h1>
+          <p className="text-sm text-white/40 mt-2">
             {list.items.length} {list.items.length === 1 ? "game" : "games"}
             {!list.isPublic && (
-              <span className="ml-1.5 text-white/20">· Private</span>
+              <span className="ml-2 text-white/20">· Private</span>
             )}
           </p>
           {list.description && (
-            <p className="text-sm text-white/60 mt-2 max-w-lg">{list.description}</p>
+            <p className="text-sm text-white/50 mt-2 max-w-lg leading-relaxed">{list.description}</p>
           )}
         </div>
         {isOwner && <DeleteListButton listId={id} username={username} />}
@@ -75,39 +74,48 @@ export default async function ListDetailPage({ params }) {
 
       {/* Games grid */}
       {list.items.length === 0 ? (
-        <div className="text-center py-20 border border-white/5 rounded-xl">
-          <p className="text-white/40 text-sm">No games in this list yet.</p>
+        <div className="text-center py-24 border border-white/5 rounded-2xl">
+          <p className="text-white/30 text-sm">No games in this list yet.</p>
           <Link
             href="/games"
-            className="text-violet-400 hover:text-violet-300 text-sm mt-2 inline-block transition-colors"
+            className="text-violet-400 hover:text-violet-300 text-sm mt-3 inline-block transition-colors"
           >
             Search for games →
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {list.items.map((item) => (
             <div key={item.id} className="group relative">
               <Link href={`/games/${item.game.slug}`}>
-                <div className="relative aspect-[3/4] rounded-lg overflow-hidden bg-white/5 border border-white/10 group-hover:border-violet-500/50 transition-colors">
+                <div className="relative aspect-[3/4] rounded-xl overflow-hidden bg-white/5 border border-white/[0.08] group-hover:border-violet-500/50 transition-all duration-200 shadow-md group-hover:shadow-violet-900/20 group-hover:shadow-xl">
                   {item.game.coverUrl ? (
                     <Image
                       src={item.game.coverUrl}
                       alt={item.game.title}
                       fill
                       className="object-cover group-hover:scale-105 transition-transform duration-300"
-                      sizes="150px"
+                      sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 200px"
                     />
                   ) : (
-                    <div className="absolute inset-0 flex items-center justify-center text-white/20 text-xs p-2 text-center">
+                    <div className="absolute inset-0 flex items-center justify-center text-white/20 text-xs p-3 text-center leading-snug">
                       {item.game.title}
                     </div>
                   )}
+
+                  {/* Hover overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-end p-3">
+                    <p className="text-xs text-white font-medium leading-snug line-clamp-2">
+                      {item.game.title}
+                    </p>
+                  </div>
                 </div>
-                <p className="text-xs text-white/50 mt-1.5 truncate group-hover:text-white transition-colors">
-                  {item.game.title}
-                </p>
               </Link>
+
+              <p className="text-xs text-white/40 mt-2 truncate group-hover:text-white/70 transition-colors">
+                {item.game.title}
+              </p>
+
               {isOwner && (
                 <RemoveFromListButton listId={id} igdbId={item.game.igdbId} />
               )}

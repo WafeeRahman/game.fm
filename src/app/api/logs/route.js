@@ -8,16 +8,16 @@ export async function POST(request) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { igdbId, status, rating, review, isReplay } = await request.json();
+  const { igdbId, status, rating, review, isReplay, playedOn } = await request.json();
 
   if (!igdbId || !status) {
     return Response.json({ error: "igdbId and status are required" }, { status: 400 });
   }
 
-  // 1. Ensure the game exists in our DB
   const game = await upsertGame(igdbId);
 
-  // 2. Upsert the log (one log per user per game)
+  const playedOnDate = playedOn ? new Date(playedOn) : null;
+
   const log = await prisma.gameLog.upsert({
     where: {
       userId_gameId: {
@@ -32,14 +32,16 @@ export async function POST(request) {
       rating: rating ?? null,
       review: review?.trim() || null,
       isReplay: isReplay ?? false,
-      completedAt: status === "COMPLETED" ? new Date() : null,
+      playedOn: playedOnDate,
+      completedAt: status === "COMPLETED" ? (playedOnDate ?? new Date()) : null,
     },
     update: {
       status,
       rating: rating ?? null,
       review: review?.trim() || null,
       isReplay: isReplay ?? false,
-      completedAt: status === "COMPLETED" ? new Date() : null,
+      playedOn: playedOnDate,
+      completedAt: status === "COMPLETED" ? (playedOnDate ?? new Date()) : null,
     },
   });
 

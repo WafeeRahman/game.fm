@@ -87,6 +87,7 @@ model GameLog {
   status      GameStatus @default(PLAYING)
   rating      Float? // 0.5 – 5.0
   review      String?
+  playedOn    DateTime?  // diary date — when the user played/completed it
   completedAt DateTime?
   isReplay    Boolean    @default(false)
   isSpoiler   Boolean    @default(false)
