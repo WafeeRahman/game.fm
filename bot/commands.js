@@ -1,120 +1,95 @@
 import { SlashCommandBuilder, EmbedBuilder } from "discord.js";
-import { prisma } from "./lib/db.js";
 
-async function getUserByDiscordId(discordId) {
-  const account = await prisma.account.findFirst({
-    where: { provider: "discord", providerAccountId: discordId },
-    select: { userId: true },
+const BASE_URL = process.env.NEXT_PUBLIC_URL ?? "http://localhost:3000";
+const SECRET = process.env.BOT_SECRET;
+
+async function botFetch(path) {
+  const res = await fetch(`${BASE_URL}${path}`, {
+    headers: { Authorization: `Bearer ${SECRET}` },
   });
-  if (!account) return null;
-  return prisma.user.findUnique({
-    where: { id: account.userId },
-    select: { id: true, username: true, name: true, _count: { select: { logs: true } } },
-  });
+  if (!res.ok) return null;
+  return res.json();
 }
 
-// /recent — show what a user recently played
+async function resolveUser(discordUser) {
+  return botFetch(`/api/bot/user/discord/${discordUser.id}`);
+}
+
+// /recent
 async function handleRecent(interaction) {
   await interaction.deferReply();
-
   const target = interaction.options.getUser("user") ?? interaction.user;
-  const user = await getUserByDiscordId(target.id);
+  const data = await resolveUser(target);
 
-  if (!user) {
-    return interaction.editReply("That user hasn't connected their game.fm account yet.");
+  if (!data) {
+    return interaction.editReply(`${target.username} hasn't connected their game.fm account.`);
   }
 
-  const sessions = await prisma.gameSession.findMany({
-    where: { userId: user.id, durationMins: { not: null } },
-    orderBy: { startedAt: "desc" },
-    take: 5,
-    include: { game: { select: { title: true, slug: true } } },
-  });
-
-  if (sessions.length === 0) {
-    return interaction.editReply(`**${user.name ?? user.username}** hasn't logged any sessions yet.`);
+  if (!data.sessions?.length) {
+    return interaction.editReply(`**${data.name ?? data.username}** hasn't logged any sessions yet.`);
   }
 
-  const lines = sessions.map((s) => {
+  const lines = data.sessions.map((s) => {
     const hrs = Math.floor(s.durationMins / 60);
     const mins = s.durationMins % 60;
     const dur = hrs > 0 ? `${hrs}h ${mins}m` : `${mins}m`;
-    const date = s.startedAt.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    const date = new Date(s.startedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" });
     return `**${s.game.title}** — ${dur} · ${date}`;
   });
 
   const embed = new EmbedBuilder()
-    .setTitle(`${user.name ?? user.username}'s recent sessions`)
+    .setTitle(`${data.name ?? data.username}'s recent sessions`)
     .setDescription(lines.join("\n"))
     .setColor(0x7c3aed)
-    .setURL(`${process.env.NEXT_PUBLIC_URL ?? "http://localhost:3000"}/users/${user.username}`);
+    .setURL(`${BASE_URL}/users/${data.username}`);
 
   interaction.editReply({ embeds: [embed] });
 }
 
-// /stats — quick stats for a user
+// /stats
 async function handleStats(interaction) {
   await interaction.deferReply();
-
   const target = interaction.options.getUser("user") ?? interaction.user;
-  const user = await getUserByDiscordId(target.id);
+  const data = await resolveUser(target);
 
-  if (!user) {
-    return interaction.editReply("That user hasn't connected their game.fm account yet.");
+  if (!data) {
+    return interaction.editReply(`${target.username} hasn't connected their game.fm account.`);
   }
 
-  const [totalMins, logCount, nowPlaying] = await Promise.all([
-    prisma.gameSession.aggregate({
-      where: { userId: user.id },
-      _sum: { durationMins: true },
-    }),
-    prisma.gameLog.count({ where: { userId: user.id } }),
-    prisma.gameSession.findFirst({
-      where: { userId: user.id, isNowPlaying: true },
-      include: { game: { select: { title: true } } },
-    }),
-  ]);
-
-  const totalHours = Math.floor((totalMins._sum.durationMins ?? 0) / 60);
-
   const embed = new EmbedBuilder()
-    .setTitle(`${user.name ?? user.username}'s stats`)
+    .setTitle(`${data.name ?? data.username}'s stats`)
     .addFields(
-      { name: "Games logged", value: String(logCount), inline: true },
-      { name: "Hours played", value: String(totalHours), inline: true },
-      { name: "Now playing", value: nowPlaying?.game.title ?? "Nothing", inline: true }
+      { name: "Games logged", value: String(data.gamesLogged ?? 0), inline: true },
+      { name: "Hours played", value: String(data.totalHours ?? 0), inline: true },
+      { name: "Now playing", value: data.nowPlaying ?? "Nothing", inline: true }
     )
     .setColor(0x7c3aed)
-    .setURL(`${process.env.NEXT_PUBLIC_URL ?? "http://localhost:3000"}/users/${user.username}`);
+    .setURL(`${BASE_URL}/users/${data.username}`);
 
   interaction.editReply({ embeds: [embed] });
 }
 
-// /profile — link to game.fm profile
+// /profile
 async function handleProfile(interaction) {
   const target = interaction.options.getUser("user") ?? interaction.user;
-  const user = await getUserByDiscordId(target.id);
+  const data = await resolveUser(target);
 
-  if (!user) {
-    return interaction.reply({ content: "That user hasn't connected their game.fm account yet.", ephemeral: true });
+  if (!data) {
+    return interaction.reply({ content: `${target.username} hasn't connected their game.fm account.`, ephemeral: true });
   }
 
-  const url = `${process.env.NEXT_PUBLIC_URL ?? "http://localhost:3000"}/users/${user.username}`;
-  interaction.reply(`**${user.name ?? user.username}** on game.fm: ${url}`);
+  interaction.reply(`**${data.name ?? data.username}** on game.fm: ${BASE_URL}/users/${data.username}`);
 }
 
-// Command definitions
 export const commands = [
   new SlashCommandBuilder()
     .setName("recent")
     .setDescription("Show recently played games")
     .addUserOption((o) => o.setName("user").setDescription("Discord user (defaults to you)")),
-
   new SlashCommandBuilder()
     .setName("stats")
     .setDescription("Show game.fm stats")
     .addUserOption((o) => o.setName("user").setDescription("Discord user (defaults to you)")),
-
   new SlashCommandBuilder()
     .setName("profile")
     .setDescription("Get a link to a game.fm profile")
@@ -123,7 +98,6 @@ export const commands = [
 
 export async function handleCommand(interaction) {
   if (!interaction.isChatInputCommand()) return;
-
   switch (interaction.commandName) {
     case "recent": return handleRecent(interaction);
     case "stats": return handleStats(interaction);

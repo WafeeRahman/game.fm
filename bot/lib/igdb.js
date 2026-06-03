@@ -1,5 +1,5 @@
-// Minimal IGDB client for the bot — matches a game name to an IGDB game
-// Reuses the same token cache pattern as the web app
+// Lightweight IGDB client for the bot
+// Handles token caching and game name → IGDB matching
 
 let tokenCache = null;
 
@@ -10,10 +10,13 @@ async function getToken() {
     `https://id.twitch.tv/oauth2/token?client_id=${process.env.TWITCH_CLIENT_ID}&client_secret=${process.env.TWITCH_CLIENT_SECRET}&grant_type=client_credentials`,
     { method: "POST" }
   );
+
+  if (!res.ok) throw new Error(`IGDB token fetch failed: ${res.status}`);
+
   const data = await res.json();
   tokenCache = {
     token: data.access_token,
-    expiresAt: Date.now() + data.expires_in * 1000 - 60000,
+    expiresAt: Date.now() + data.expires_in * 1000 - 60_000,
   };
   return tokenCache.token;
 }
@@ -29,24 +32,36 @@ async function igdbFetch(endpoint, query) {
     },
     body: query,
   });
+  if (!res.ok) throw new Error(`IGDB ${endpoint} failed: ${res.status}`);
   return res.json();
 }
 
-// Cache: game name (lowercase) → igdb game object
+// In-memory cache: lowercase game name → igdb game (or null if no match)
 const nameCache = new Map();
 
 export async function findGameByName(name) {
-  const key = name.toLowerCase();
+  const key = name.toLowerCase().trim();
   if (nameCache.has(key)) return nameCache.get(key);
 
-  const results = await igdbFetch(
-    "games",
-    `search "${name}"; fields id,name,slug,cover.image_id; limit 1;`
-  );
+  try {
+    // Search by name, prefer exact or close matches
+    const results = await igdbFetch(
+      "games",
+      `search "${key}"; fields id,name,slug,cover.image_id; where version_parent = null; limit 3;`
+    );
 
-  const game = results?.[0] ?? null;
-  nameCache.set(key, game);
-  return game;
+    // Pick the best match — prefer exact name match, otherwise take first result
+    const exact = results?.find(
+      (g) => g.name.toLowerCase() === key
+    );
+    const game = exact ?? results?.[0] ?? null;
+
+    nameCache.set(key, game);
+    return game;
+  } catch (err) {
+    console.error(`[igdb] Search failed for "${name}":`, err.message);
+    return null;
+  }
 }
 
 export function igdbImageUrl(imageId, size = "cover_big") {

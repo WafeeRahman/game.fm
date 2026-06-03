@@ -10,6 +10,13 @@ export async function PATCH(request) {
 
   const { name, bio } = await request.json();
 
+  if (name !== undefined && typeof name === "string" && name.trim().length > 50) {
+    return Response.json({ error: "Name must be 50 characters or fewer" }, { status: 400 });
+  }
+  if (bio !== undefined && typeof bio === "string" && bio.trim().length > 200) {
+    return Response.json({ error: "Bio must be 200 characters or fewer" }, { status: 400 });
+  }
+
   const user = await prisma.user.update({
     where: { id: session.user.id },
     data: {

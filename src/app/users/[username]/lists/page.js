@@ -14,7 +14,8 @@ export async function generateMetadata({ params }) {
 export default async function UserListsPage({ params }) {
   const { username } = await params;
 
-  const [session, user] = await Promise.all([auth(), getUserProfile(username)]);
+  const session = await auth();
+  const user = await getUserProfile(username, session?.user?.id ?? null);
   if (!user) notFound();
 
   const isOwnProfile = session?.user?.id === user.id;

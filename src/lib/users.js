@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/db";
 
-// Fetch a public user profile by username, including stats
-export async function getUserProfile(username) {
+// Fetch a user profile by username.
+// Pass viewerId (the logged-in user's ID) so private logs are only shown to the owner.
+export async function getUserProfile(username, viewerId = null) {
   const user = await prisma.user.findUnique({
     where: { username },
     select: {
@@ -19,8 +20,11 @@ export async function getUserProfile(username) {
           following: true,
         },
       },
-      // Most recent game logs for the diary section
       logs: {
+        where: {
+          // Non-owners only see public logs
+          isPublic: true,
+        },
         orderBy: { updatedAt: "desc" },
         take: 10,
         select: {
@@ -28,6 +32,7 @@ export async function getUserProfile(username) {
           status: true,
           rating: true,
           review: true,
+          playedOn: true,
           completedAt: true,
           updatedAt: true,
           game: {
@@ -40,7 +45,6 @@ export async function getUserProfile(username) {
           },
         },
       },
-      // Most recent play sessions
       sessions: {
         orderBy: { startedAt: "desc" },
         take: 5,
@@ -61,6 +65,39 @@ export async function getUserProfile(username) {
       },
     },
   });
+
+  if (!user) return null;
+
+  // If the viewer is the owner, also fetch their private logs and merge them in
+  if (viewerId && viewerId === user.id) {
+    const privateLogs = await prisma.gameLog.findMany({
+      where: { userId: user.id, isPublic: false },
+      orderBy: { updatedAt: "desc" },
+      take: 10,
+      select: {
+        id: true,
+        status: true,
+        rating: true,
+        review: true,
+        playedOn: true,
+        completedAt: true,
+        updatedAt: true,
+        game: {
+          select: {
+            id: true,
+            title: true,
+            slug: true,
+            coverUrl: true,
+          },
+        },
+      },
+    });
+
+    // Merge and re-sort by updatedAt, keep top 10
+    user.logs = [...user.logs, ...privateLogs]
+      .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+      .slice(0, 10);
+  }
 
   return user;
 }

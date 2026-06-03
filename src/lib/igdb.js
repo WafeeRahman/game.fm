@@ -130,3 +130,23 @@ export async function getPopularGames(limit = 20) {
   `
   );
 }
+
+
+// Find a game by name — used by the bot to match Discord Rich Presence game names
+const nameMatchCache = new Map();
+
+export async function findGameByName(name) {
+  const key = name.toLowerCase().trim();
+  if (nameMatchCache.has(key)) return nameMatchCache.get(key);
+
+  const results = await igdbFetch(
+    "games",
+    `search "${key}"; fields id,name,slug,cover.image_id,involved_companies.developer,involved_companies.company.name,genres.name,platforms.name,total_rating,first_release_date; where version_parent = null; limit 3;`
+  );
+
+  const exact = results?.find((g) => g.name.toLowerCase() === key);
+  const game = exact ?? results?.[0] ?? null;
+
+  nameMatchCache.set(key, game);
+  return game;
+}

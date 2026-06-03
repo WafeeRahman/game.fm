@@ -30,6 +30,12 @@ export async function POST(request) {
   if (!name?.trim()) {
     return Response.json({ error: "Name is required" }, { status: 400 });
   }
+  if (name.trim().length > 100) {
+    return Response.json({ error: "Name must be 100 characters or fewer" }, { status: 400 });
+  }
+  if (description && description.length > 500) {
+    return Response.json({ error: "Description must be 500 characters or fewer" }, { status: 400 });
+  }
 
   const list = await prisma.list.create({
     data: {

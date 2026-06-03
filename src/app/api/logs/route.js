@@ -14,6 +14,17 @@ export async function POST(request) {
     return Response.json({ error: "igdbId and status are required" }, { status: 400 });
   }
 
+  const validStatuses = ["PLAYING", "COMPLETED", "DROPPED", "BACKLOG", "WISHLIST", "SHELVED"];
+  if (!validStatuses.includes(status)) {
+    return Response.json({ error: "Invalid status" }, { status: 400 });
+  }
+  if (rating !== undefined && rating !== null && (rating < 1 || rating > 5)) {
+    return Response.json({ error: "Rating must be between 1 and 5" }, { status: 400 });
+  }
+  if (review && typeof review === "string" && review.length > 2000) {
+    return Response.json({ error: "Review must be 2000 characters or fewer" }, { status: 400 });
+  }
+
   const game = await upsertGame(igdbId);
 
   const playedOnDate = playedOn ? new Date(playedOn) : null;

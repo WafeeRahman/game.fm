@@ -33,10 +33,8 @@ function formatDuration(mins) {
 export default async function UserProfilePage({ params }) {
   const { username } = await params;
 
-  const [session, user] = await Promise.all([
-    auth(),
-    getUserProfile(username),
-  ]);
+  const session = await auth();
+  const user = await getUserProfile(username, session?.user?.id ?? null);
 
   if (!user) notFound();
 
