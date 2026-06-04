@@ -62,6 +62,12 @@ export default async function UserListsPage({ params }) {
         >
           Games
         </Link>
+        <Link
+          href={`/users/${username}/diary`}
+          className="px-1 pb-3 mr-6 text-sm text-white/40 hover:text-white border-b-2 border-transparent hover:border-white/20 transition-colors translate-y-px"
+        >
+          Diary
+        </Link>
         <span className="px-1 pb-3 text-sm font-medium text-white border-b-2 border-violet-500 translate-y-px">
           Lists
         </span>

@@ -7,8 +7,6 @@ function isAuthorized(request) {
   return auth === `Bearer ${secret}`;
 }
 
-// GET /api/bot/user/discord/[discordId]
-// Returns public profile data for slash commands
 export async function GET(request, { params }) {
   if (!isAuthorized(request)) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
@@ -25,17 +23,12 @@ export async function GET(request, { params }) {
 
   const user = await prisma.user.findUnique({
     where: { id: account.userId },
-    select: {
-      id: true,
-      username: true,
-      name: true,
-      _count: { select: { logs: true } },
-    },
+    select: { id: true, username: true, name: true, _count: { select: { logs: true } } },
   });
 
   if (!user) return Response.json(null, { status: 404 });
 
-  const [totalMins, sessions, nowPlaying] = await Promise.all([
+  const [totalMins, sessions, nowPlaying, lastSession] = await Promise.all([
     prisma.gameSession.aggregate({
       where: { userId: user.id },
       _sum: { durationMins: true },
@@ -47,12 +40,24 @@ export async function GET(request, { params }) {
       select: {
         startedAt: true,
         durationMins: true,
-        game: { select: { title: true } },
+        game: { select: { title: true, slug: true } },
       },
     }),
     prisma.gameSession.findFirst({
       where: { userId: user.id, isNowPlaying: true },
-      select: { game: { select: { title: true } } },
+      select: {
+        startedAt: true,
+        game: { select: { title: true, slug: true, coverUrl: true } },
+      },
+    }),
+    prisma.gameSession.findFirst({
+      where: { userId: user.id, isNowPlaying: false, durationMins: { not: null } },
+      orderBy: { startedAt: "desc" },
+      select: {
+        startedAt: true,
+        durationMins: true,
+        game: { select: { title: true, slug: true } },
+      },
     }),
   ]);
 
@@ -61,7 +66,18 @@ export async function GET(request, { params }) {
     name: user.name,
     gamesLogged: user._count.logs,
     totalHours: Math.floor((totalMins._sum.durationMins ?? 0) / 60),
-    nowPlaying: nowPlaying?.game.title ?? null,
+    totalMins: totalMins._sum.durationMins ?? 0,
+    nowPlaying: nowPlaying ? {
+      title: nowPlaying.game.title,
+      slug: nowPlaying.game.slug,
+      startedAt: nowPlaying.startedAt,
+    } : null,
+    lastSession: lastSession ? {
+      title: lastSession.game.title,
+      slug: lastSession.game.slug,
+      startedAt: lastSession.startedAt,
+      durationMins: lastSession.durationMins,
+    } : null,
     sessions,
   });
 }
