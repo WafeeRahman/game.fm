@@ -1,0 +1,18 @@
+# Discord bot — lightweight, long-running Node.js process
+FROM node:20-alpine
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+COPY package.json package-lock.json* ./
+RUN npm ci --ignore-scripts --omit=dev
+
+COPY bot/ ./bot/
+COPY .env* ./
+
+# Don't run as root
+RUN addgroup --system --gid 1001 botuser
+RUN adduser --system --uid 1001 botuser
+USER botuser
+
+CMD ["node", "bot/index.js"]

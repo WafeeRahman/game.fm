@@ -1,0 +1,14 @@
+node_modules
+.next
+.git
+.gitignore
+.env*
+!.env.example
+*.md
+tests
+coverage
+.claude
+.vscode
+Jenkinsfile
+Dockerfile*
+.dockerignore
