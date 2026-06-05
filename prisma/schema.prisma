@@ -30,6 +30,8 @@ model User {
   followers    Follow[]      @relation("Followers")
   activities   Activity[]
   likes        Like[]
+  notificationsReceived Notification[] @relation("NotificationsReceived")
+  notificationsSent     Notification[] @relation("NotificationsSent")
 
   // NextAuth
   accounts     Account[]
@@ -199,6 +201,25 @@ model Like {
   user User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   log  GameLog? @relation(fields: [logId], references: [id], onDelete: Cascade)
   list List?    @relation(fields: [listId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id          String           @id @default(cuid())
+  userId      String           // recipient
+  type        NotificationType
+  actorId     String?          // who triggered it
+  referenceId String?          // related entity (logId, listId, etc.)
+  read        Boolean          @default(false)
+  createdAt   DateTime         @default(now())
+
+  user  User  @relation("NotificationsReceived", fields: [userId], references: [id], onDelete: Cascade)
+  actor User? @relation("NotificationsSent", fields: [actorId], references: [id], onDelete: Cascade)
+}
+
+enum NotificationType {
+  FOLLOW
+  LIKE_REVIEW
+  LIKE_LIST
 }
 
 // ─── NextAuth Models ──────────────────────────────────────────────────────────

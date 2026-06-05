@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Search } from "lucide-react";
 import { auth } from "@/auth";
+import NotificationBell from "@/components/NotificationBell";
 
 export default async function Navbar() {
   const session = await auth();
@@ -52,6 +53,7 @@ export default async function Navbar() {
         <div className="flex items-center gap-2 flex-shrink-0">
           {user ? (
             <>
+              <NotificationBell />
               {user.image && (
                 <Link href={`/users/${user.username}`}>
                   <Image

@@ -54,6 +54,7 @@ export default function LogGameButton({ igdbId, existingLog }) {
       ? new Date(existingLog.playedOn).toISOString().split("T")[0]
       : todayString()
   );
+  const [isSpoiler, setIsSpoiler] = useState(existingLog?.isSpoiler ?? false);
   const [saving, setSaving] = useState(false);
 
   async function handleSubmit(e) {
@@ -69,6 +70,7 @@ export default function LogGameButton({ igdbId, existingLog }) {
         rating: rating || null,
         review,
         isReplay,
+        isSpoiler,
         playedOn,
       }),
     });
@@ -179,18 +181,32 @@ export default function LogGameButton({ igdbId, existingLog }) {
                 />
               </div>
 
-              {/* Replay */}
-              <label className="flex items-center gap-3 cursor-pointer group">
-                <input
-                  type="checkbox"
-                  checked={isReplay}
-                  onChange={(e) => setIsReplay(e.target.checked)}
-                  className="accent-violet-500 w-4 h-4"
-                />
-                <span className="text-sm text-white/50 group-hover:text-white/70 transition-colors">
-                  This is a replay
-                </span>
-              </label>
+              {/* Replay & Spoiler */}
+              <div className="flex flex-col gap-2.5">
+                <label className="flex items-center gap-3 cursor-pointer group">
+                  <input
+                    type="checkbox"
+                    checked={isReplay}
+                    onChange={(e) => setIsReplay(e.target.checked)}
+                    className="accent-violet-500 w-4 h-4"
+                  />
+                  <span className="text-sm text-white/50 group-hover:text-white/70 transition-colors">
+                    This is a replay
+                  </span>
+                </label>
+
+                <label className="flex items-center gap-3 cursor-pointer group">
+                  <input
+                    type="checkbox"
+                    checked={isSpoiler}
+                    onChange={(e) => setIsSpoiler(e.target.checked)}
+                    className="accent-amber-500 w-4 h-4"
+                  />
+                  <span className="text-sm text-white/50 group-hover:text-white/70 transition-colors">
+                    Review contains spoilers
+                  </span>
+                </label>
+              </div>
 
               <button
                 type="submit"

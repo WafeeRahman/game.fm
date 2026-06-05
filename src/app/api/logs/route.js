@@ -8,7 +8,7 @@ export async function POST(request) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { igdbId, status, rating, review, isReplay, playedOn } = await request.json();
+  const { igdbId, status, rating, review, isReplay, isSpoiler, playedOn } = await request.json();
 
   if (!igdbId || !status) {
     return Response.json({ error: "igdbId and status are required" }, { status: 400 });
@@ -43,6 +43,7 @@ export async function POST(request) {
       rating: rating ?? null,
       review: review?.trim() || null,
       isReplay: isReplay ?? false,
+      isSpoiler: isSpoiler ?? false,
       playedOn: playedOnDate,
       completedAt: status === "COMPLETED" ? (playedOnDate ?? new Date()) : null,
     },
@@ -51,6 +52,7 @@ export async function POST(request) {
       rating: rating ?? null,
       review: review?.trim() || null,
       isReplay: isReplay ?? false,
+      isSpoiler: isSpoiler ?? false,
       playedOn: playedOnDate,
       completedAt: status === "COMPLETED" ? (playedOnDate ?? new Date()) : null,
     },

@@ -6,6 +6,8 @@ import { prisma } from "@/lib/db";
 import LogGameButton from "@/components/LogGameButton";
 import AddToListButton from "@/components/AddToListButton";
 import LogSessionButton from "@/components/LogSessionButton";
+import SpoilerText from "@/components/SpoilerText";
+import LikeButton from "@/components/LikeButton";
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
@@ -28,8 +30,49 @@ export default async function GamePage({ params }) {
   // and fetch their lists (with membership state for this game)
   let existingLog = null;
   let userLists = [];
+  let reviews = [];
+  let userLikes = new Set();
+
+  // Fetch community reviews for this game
+  const dbGameForReviews = await prisma.game.findUnique({ where: { igdbId: game.id } });
+  if (dbGameForReviews) {
+    reviews = await prisma.gameLog.findMany({
+      where: {
+        gameId: dbGameForReviews.id,
+        review: { not: null },
+        isPublic: true,
+      },
+      orderBy: { updatedAt: "desc" },
+      take: 20,
+      select: {
+        id: true,
+        rating: true,
+        review: true,
+        isSpoiler: true,
+        status: true,
+        updatedAt: true,
+        _count: { select: { likes: true } },
+        user: {
+          select: { id: true, username: true, name: true, image: true },
+        },
+      },
+    });
+
+    // Check which reviews the current user has liked
+    if (session?.user && reviews.length > 0) {
+      const likes = await prisma.like.findMany({
+        where: {
+          userId: session.user.id,
+          logId: { in: reviews.map((r) => r.id) },
+        },
+        select: { logId: true },
+      });
+      userLikes = new Set(likes.map((l) => l.logId));
+    }
+  }
+
   if (session?.user) {
-    const dbGame = await prisma.game.findUnique({ where: { igdbId: game.id } });
+    const dbGame = dbGameForReviews ?? await prisma.game.findUnique({ where: { igdbId: game.id } });
     if (dbGame) {
       [existingLog] = await Promise.all([
         prisma.gameLog.findUnique({
@@ -181,6 +224,85 @@ export default async function GamePage({ params }) {
             </div>
           </div>
         </div>
+
+        {/* Community Reviews */}
+        {reviews.length > 0 && (
+          <div className="mt-12">
+            <h2 className="text-xs font-semibold text-white/30 uppercase tracking-widest mb-4">
+              Reviews
+            </h2>
+            <div className="border border-white/5 rounded-xl divide-y divide-white/5">
+              {reviews.map((review) => (
+                <div key={review.id} className="px-5 py-4">
+                  <div className="flex items-center gap-3 mb-2">
+                    <a href={`/users/${review.user.username}`} className="flex-shrink-0">
+                      {review.user.image ? (
+                        <Image
+                          src={review.user.image}
+                          alt={review.user.name ?? review.user.username}
+                          width={28}
+                          height={28}
+                          className="rounded-full"
+                        />
+                      ) : (
+                        <div className="w-7 h-7 rounded-full bg-white/5 flex items-center justify-center text-[10px] font-bold text-white/20">
+                          {(review.user.username ?? "?")[0].toUpperCase()}
+                        </div>
+                      )}
+                    </a>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <a
+                          href={`/users/${review.user.username}`}
+                          className="text-sm font-medium text-white hover:text-violet-300 transition-colors"
+                        >
+                          {review.user.name ?? review.user.username}
+                        </a>
+                        {review.rating && (
+                          <span className="text-xs text-yellow-400">
+                            {"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}
+                          </span>
+                        )}
+                        {review.isSpoiler && (
+                          <span className="text-[10px] text-amber-400/70 border border-amber-400/30 rounded px-1.5 py-0.5">
+                            Spoiler
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <span className="text-[10px] text-white/20 flex-shrink-0">
+                      {new Date(review.updatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                    </span>
+                  </div>
+
+                  <div className="ml-10">
+                    {review.isSpoiler ? (
+                      <SpoilerText>
+                        <p className="text-sm text-white/60 leading-relaxed">
+                          &ldquo;{review.review}&rdquo;
+                        </p>
+                      </SpoilerText>
+                    ) : (
+                      <p className="text-sm text-white/60 leading-relaxed">
+                        &ldquo;{review.review}&rdquo;
+                      </p>
+                    )}
+
+                    {session?.user && (
+                      <div className="mt-2">
+                        <LikeButton
+                          logId={review.id}
+                          initialLiked={userLikes.has(review.id)}
+                          initialCount={review._count.likes}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -3,6 +3,7 @@ import Image from "next/image";
 import { auth } from "@/auth";
 import { getFeed } from "@/lib/feed";
 import { getPopularGames, igdbImageUrl } from "@/lib/igdb";
+import SpoilerText from "@/components/SpoilerText";
 
 function FeedItem({ log }) {
   const cover = log.game.coverUrl;
@@ -48,7 +49,13 @@ function FeedItem({ log }) {
             </span>
           )}
           {log.review && (
-            <p className="text-xs text-white/40 truncate max-w-xs">&ldquo;{log.review}&rdquo;</p>
+            log.isSpoiler ? (
+              <SpoilerText label="Spoiler">
+                <span className="text-xs text-white/40 truncate max-w-xs">&ldquo;{log.review}&rdquo;</span>
+              </SpoilerText>
+            ) : (
+              <p className="text-xs text-white/40 truncate max-w-xs">&ldquo;{log.review}&rdquo;</p>
+            )
           )}
           <span className="text-xs text-white/20">
             {new Date(log.updatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}

@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, EmbedBuilder } from "discord.js";
+import { SlashCommandBuilder, EmbedBuilder, AttachmentBuilder } from "discord.js";
 
 const BASE_URL = process.env.NEXT_PUBLIC_URL ?? "http://localhost:3000";
 const SECRET = process.env.BOT_SECRET;
@@ -320,6 +320,41 @@ async function handleStreak(interaction) {
   });
 }
 
+// ─── /chart ─────────────────────────────────────────────────────────────────
+
+async function handleChart(interaction) {
+  await interaction.deferReply();
+  const target = interaction.options.getUser("user") ?? interaction.user;
+  const period = interaction.options.getString("period") ?? "alltime";
+  const size = interaction.options.getString("size") ?? "3x3";
+
+  const data = await resolveUser(target);
+  if (!data) return interaction.editReply(notLinked(target.username));
+
+  // Fetch chart image from the web API
+  const res = await fetch(
+    `${BASE_URL}/api/bot/chart?discordId=${target.id}&period=${period}&size=${size}`,
+    {
+      headers: {
+        Authorization: `Bearer ${SECRET}`,
+      },
+    }
+  );
+
+  if (!res.ok) {
+    const errText = await res.text().catch(() => "");
+    if (errText.includes("No data")) {
+      return interaction.editReply(`**${data.name ?? data.username}** hasn't logged any playtime ${PERIOD_LABEL[period] ?? "yet"}.`);
+    }
+    return interaction.editReply("Couldn't generate chart — try again later.");
+  }
+
+  const buffer = Buffer.from(await res.arrayBuffer());
+  const attachment = new AttachmentBuilder(buffer, { name: "chart.png" });
+
+  interaction.editReply({ files: [attachment] });
+}
+
 // ─── /profile ────────────────────────────────────────────────────────────────
 
 async function handleProfile(interaction) {
@@ -387,6 +422,23 @@ export const commands = [
     .setDescription("Show gaming streak (consecutive days played)")
     .addUserOption((o) => o.setName("user").setDescription("Discord user (defaults to you)")),
   new SlashCommandBuilder()
+    .setName("chart")
+    .setDescription("Generate a collage of your most played games")
+    .addStringOption((o) =>
+      o.setName("size").setDescription("Grid size").addChoices(
+        { name: "3x3 (default)", value: "3x3" },
+        { name: "4x4", value: "4x4" },
+        { name: "5x5", value: "5x5" }
+      ))
+    .addStringOption((o) =>
+      o.setName("period").setDescription("Time period").addChoices(
+        { name: "This week", value: "week" },
+        { name: "This month", value: "month" },
+        { name: "This year", value: "year" },
+        { name: "All time (default)", value: "alltime" }
+      ))
+    .addUserOption((o) => o.setName("user").setDescription("Discord user (defaults to you)")),
+  new SlashCommandBuilder()
     .setName("profile")
     .setDescription("Get a link to a game.fm profile")
     .addUserOption((o) => o.setName("user").setDescription("Discord user (defaults to you)")),
@@ -405,6 +457,7 @@ export async function handleCommand(interaction) {
     case "globalwhoknows":  return handleGlobalWhoKnows(interaction);
     case "compare":         return handleCompare(interaction);
     case "streak":          return handleStreak(interaction);
+    case "chart":           return handleChart(interaction);
     case "profile":         return handleProfile(interaction);
   }
 }

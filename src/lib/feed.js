@@ -22,7 +22,9 @@ export async function getFeed(userId, limit = 30) {
       status: true,
       rating: true,
       review: true,
+      isSpoiler: true,
       updatedAt: true,
+      _count: { select: { likes: true } },
       user: {
         select: { id: true, username: true, name: true, image: true },
       },

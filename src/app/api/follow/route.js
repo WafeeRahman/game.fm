@@ -44,6 +44,16 @@ export async function POST(request) {
     },
   });
 
+  // Notify the target user
+  await prisma.notification.create({
+    data: {
+      userId: target.id,
+      type: "FOLLOW",
+      actorId: session.user.id,
+      referenceId: session.user.id,
+    },
+  });
+
   return Response.json({ following: true });
 }
 

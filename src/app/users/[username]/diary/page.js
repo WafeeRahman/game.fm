@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { getUserProfile } from "@/lib/users";
 import { prisma } from "@/lib/db";
+import SpoilerText from "@/components/SpoilerText";
 
 export async function generateMetadata({ params }) {
   const { username } = await params;
@@ -43,6 +44,7 @@ export default async function DiaryPage({ params }) {
       status: true,
       rating: true,
       review: true,
+      isSpoiler: true,
       playedOn: true,
       updatedAt: true,
       isReplay: true,
@@ -162,9 +164,26 @@ export default async function DiaryPage({ params }) {
                           )}
                         </div>
                         {log.review && (
-                          <p className="text-xs text-white/40 mt-1 leading-relaxed line-clamp-2">
-                            &ldquo;{log.review}&rdquo;
-                          </p>
+                          log.isSpoiler && !isOwnProfile ? (
+                            <div className="mt-1">
+                              <SpoilerText>
+                                <p className="text-xs text-white/40 leading-relaxed line-clamp-2">
+                                  &ldquo;{log.review}&rdquo;
+                                </p>
+                              </SpoilerText>
+                            </div>
+                          ) : (
+                            <div className="flex items-start gap-1.5 mt-1">
+                              {log.isSpoiler && (
+                                <span className="text-[9px] text-amber-400/70 border border-amber-400/30 rounded px-1 py-0.5 flex-shrink-0 mt-0.5">
+                                  Spoiler
+                                </span>
+                              )}
+                              <p className="text-xs text-white/40 leading-relaxed line-clamp-2">
+                                &ldquo;{log.review}&rdquo;
+                              </p>
+                            </div>
+                          )
                         )}
                       </div>
                     </div>

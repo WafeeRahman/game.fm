@@ -52,7 +52,7 @@ export async function GET(request, { params }) {
 
   const games = await prisma.game.findMany({
     where: { id: { in: gameIds } },
-    select: { id: true, title: true, slug: true },
+    select: { id: true, title: true, slug: true, coverUrl: true },
   });
 
   return Response.json(
@@ -61,6 +61,7 @@ export async function GET(request, { params }) {
       return {
         title: game?.title ?? "Unknown",
         slug: game?.slug ?? "",
+        coverUrl: game?.coverUrl ?? null,
         totalMins: g._sum.durationMins ?? 0,
         sessions: g._count.id,
       };

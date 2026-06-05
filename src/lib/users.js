@@ -32,9 +32,11 @@ export async function getUserProfile(username, viewerId = null) {
           status: true,
           rating: true,
           review: true,
+          isSpoiler: true,
           playedOn: true,
           completedAt: true,
           updatedAt: true,
+          _count: { select: { likes: true } },
           game: {
             select: {
               id: true,

@@ -6,6 +6,7 @@ import { getUserProfile, getTotalPlaytime } from "@/lib/users";
 import { prisma } from "@/lib/db";
 import FollowButton from "@/components/FollowButton";
 import StopPlayingButton from "@/components/StopPlayingButton";
+import SpoilerText from "@/components/SpoilerText";
 
 export async function generateMetadata({ params }) {
   const { username } = await params;
