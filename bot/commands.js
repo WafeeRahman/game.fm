@@ -44,7 +44,7 @@ function timeAgo(dateStr) {
 }
 
 function notLinked(username) {
-  return `**${username}** hasn't connected their game.fm account.`;
+  return `**${username}** hasn't connected their game.fm account.\nSign up at ${BASE_URL}`;
 }
 
 function embed(title, url) {
@@ -355,6 +355,27 @@ async function handleChart(interaction) {
   interaction.editReply({ files: [attachment] });
 }
 
+// ─── /register ──────────────────────────────────────────────────────────────
+
+async function handleRegister(interaction) {
+  const data = await resolveUser(interaction.user);
+  if (data) {
+    return interaction.reply({
+      content: `You're already signed up! View your profile: ${profileUrl(data.username)}`,
+      ephemeral: true,
+    });
+  }
+
+  interaction.reply({
+    embeds: [embed("Join game.fm", BASE_URL)
+      .setDescription(
+        `Track the games you play, write reviews, and see what your friends are playing.\n\n` +
+        `**[Sign up with Discord](${BASE_URL}/api/auth/signin)** to get started.`
+      )
+      .setFooter({ text: "game.fm — like Last.fm, but for games" })],
+  });
+}
+
 // ─── /profile ────────────────────────────────────────────────────────────────
 
 async function handleProfile(interaction) {
@@ -439,6 +460,9 @@ export const commands = [
       ))
     .addUserOption((o) => o.setName("user").setDescription("Discord user (defaults to you)")),
   new SlashCommandBuilder()
+    .setName("register")
+    .setDescription("Get a link to sign up for game.fm"),
+  new SlashCommandBuilder()
     .setName("profile")
     .setDescription("Get a link to a game.fm profile")
     .addUserOption((o) => o.setName("user").setDescription("Discord user (defaults to you)")),
@@ -458,6 +482,7 @@ export async function handleCommand(interaction) {
     case "compare":         return handleCompare(interaction);
     case "streak":          return handleStreak(interaction);
     case "chart":           return handleChart(interaction);
+    case "register":        return handleRegister(interaction);
     case "profile":         return handleProfile(interaction);
   }
 }
