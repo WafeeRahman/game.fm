@@ -52,14 +52,14 @@ export function igdbImageUrl(imageId, size = "cover_big") {
   return `https://images.igdb.com/igdb/image/upload/t_${size}/${imageId}.jpg`;
 }
 
-export async function searchGames(query, limit = 20) {
+export async function searchGames(query, limit = 20, offset = 0) {
   const safe = query.replace(/"/g, '\\"');
   const fields = "name, slug, cover.image_id, first_release_date, genres.name, platforms.name, summary";
 
   const [ranked, broad] = await Promise.all([
-    igdbFetch("games", `search "${safe}"; fields ${fields}, total_rating_count; limit ${limit};`)
+    igdbFetch("games", `search "${safe}"; fields ${fields}, total_rating_count; limit ${limit}; offset ${offset};`)
       .catch(() => []),
-    igdbFetch("games", `fields ${fields}, total_rating_count; where name ~ *"${safe}"*; sort total_rating_count desc; limit ${limit};`)
+    igdbFetch("games", `fields ${fields}, total_rating_count; where name ~ *"${safe}"*; sort total_rating_count desc; limit ${limit}; offset ${offset};`)
       .catch(() => []),
   ]);
 
@@ -73,6 +73,34 @@ export async function searchGames(query, limit = 20) {
   }
   merged.sort((a, b) => (b.total_rating_count ?? 0) - (a.total_rating_count ?? 0));
   return merged.slice(0, limit);
+}
+
+export async function getPopularGames(limit = 20, offset = 0) {
+  return igdbFetch(
+    "games",
+    `
+    fields name, slug, cover.image_id, genres.name, platforms.name, total_rating, total_rating_count;
+    where total_rating_count > 200 & cover.image_id != null;
+    sort total_rating desc;
+    limit ${limit};
+    offset ${offset};
+  `
+  );
+}
+
+
+export async function getRecentGames(limit = 20, offset = 0) {
+  const now = Math.floor(Date.now() / 1000);
+  return igdbFetch(
+    "games",
+    `
+    fields name, slug, cover.image_id, genres.name, platforms.name, first_release_date, total_rating;
+    where first_release_date < ${now} & cover.image_id != null & total_rating_count > 5;
+    sort first_release_date desc;
+    limit ${limit};
+    offset ${offset};
+  `
+  );
 }
 
 // Get a single game by its IGDB slug — used for game detail pages
@@ -125,33 +153,6 @@ export async function getGamesBySteamIds(steamAppIds) {
            game.involved_companies.publisher;
     where external_game_source = 1 & uid = (${uidList});
     limit 500;
-  `
-  );
-}
-
-// Get popular/trending games — used for the homepage
-export async function getPopularGames(limit = 20) {
-  return igdbFetch(
-    "games",
-    `
-    fields name, slug, cover.image_id, genres.name, platforms.name, total_rating, total_rating_count;
-    where total_rating_count > 200 & cover.image_id != null;
-    sort total_rating desc;
-    limit ${limit};
-  `
-  );
-}
-
-
-export async function getRecentGames(limit = 20) {
-  const now = Math.floor(Date.now() / 1000);
-  return igdbFetch(
-    "games",
-    `
-    fields name, slug, cover.image_id, genres.name, platforms.name, first_release_date, total_rating;
-    where first_release_date < ${now} & cover.image_id != null & total_rating_count > 5;
-    sort first_release_date desc;
-    limit ${limit};
   `
   );
 }

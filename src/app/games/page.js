@@ -1,5 +1,5 @@
 import SearchBar from "@/components/SearchBar";
-import GameCard from "@/components/GameCard";
+import LoadMoreGames from "@/components/LoadMoreGames";
 import { searchGames, getPopularGames, getRecentGames } from "@/lib/igdb";
 
 export const metadata = {
@@ -23,18 +23,19 @@ export default async function GamesPage({ searchParams }) {
           <SearchBar defaultValue={q} />
         </div>
 
-        <p className="text-sm text-white/40 mb-6">
-          {games.length > 0
-            ? `${games.length} results for "${q}"`
-            : `No results for "${q}"`}
-        </p>
-
-        {games.length > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
-            {games.map((game) => (
-              <GameCard key={game.id} game={game} />
-            ))}
-          </div>
+        {games.length > 0 ? (
+          <>
+            <p className="text-sm text-white/40 mb-6">
+              Results for &ldquo;{q}&rdquo;
+            </p>
+            <LoadMoreGames
+              initialGames={games}
+              fetchUrl={`/api/games/search?q=${encodeURIComponent(q)}`}
+              pageSize={20}
+            />
+          </>
+        ) : (
+          <p className="text-sm text-white/40">No results for &ldquo;{q}&rdquo;</p>
         )}
       </div>
     );
@@ -61,22 +62,22 @@ export default async function GamesPage({ searchParams }) {
       {popular.length > 0 && (
         <section className="mb-12">
           <h2 className="text-lg font-semibold text-white mb-4">Popular games</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
-            {popular.map((game) => (
-              <GameCard key={game.id} game={game} />
-            ))}
-          </div>
+          <LoadMoreGames
+            initialGames={popular}
+            fetchUrl="/api/games/browse?type=popular"
+            pageSize={10}
+          />
         </section>
       )}
 
       {recent.length > 0 && (
         <section>
           <h2 className="text-lg font-semibold text-white mb-4">Recently released</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
-            {recent.map((game) => (
-              <GameCard key={game.id} game={game} />
-            ))}
-          </div>
+          <LoadMoreGames
+            initialGames={recent}
+            fetchUrl="/api/games/browse?type=recent"
+            pageSize={10}
+          />
         </section>
       )}
 
