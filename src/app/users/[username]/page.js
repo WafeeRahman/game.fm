@@ -60,8 +60,8 @@ export default async function UserProfilePage({ params }) {
   const stats = [
     { label: "Games", value: user._count.logs },
     { label: "Hours", value: totalHours },
-    { label: "Followers", value: user._count.followers },
-    { label: "Following", value: user._count.following },
+    { label: "Followers", value: user._count.followers, href: `/users/${username}/followers` },
+    { label: "Following", value: user._count.following, href: `/users/${username}/following` },
   ];
 
   return (
@@ -135,12 +135,23 @@ export default async function UserProfilePage({ params }) {
 
       {/* Stats bar */}
       <div className="grid grid-cols-4 gap-px bg-white/5 rounded-xl overflow-hidden border border-white/10 mb-8">
-        {stats.map(({ label, value }) => (
-          <div key={label} className="bg-neutral-950 text-center py-4 hover:bg-white/[0.02] transition-colors">
-            <p className="text-xl font-bold text-white">{value.toLocaleString()}</p>
-            <p className="text-xs text-white/30 mt-0.5">{label}</p>
-          </div>
-        ))}
+        {stats.map(({ label, value, href }) => {
+          const inner = (
+            <>
+              <p className="text-xl font-bold text-white">{value.toLocaleString()}</p>
+              <p className="text-xs text-white/30 mt-0.5">{label}</p>
+            </>
+          );
+          return href ? (
+            <Link key={label} href={href} className="bg-neutral-950 text-center py-4 hover:bg-white/[0.04] transition-colors">
+              {inner}
+            </Link>
+          ) : (
+            <div key={label} className="bg-neutral-950 text-center py-4">
+              {inner}
+            </div>
+          );
+        })}
       </div>
 
       {/* Profile nav tabs */}
