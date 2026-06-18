@@ -52,16 +52,35 @@ export function igdbImageUrl(imageId, size = "cover_big") {
   return `https://images.igdb.com/igdb/image/upload/t_${size}/${imageId}.jpg`;
 }
 
-// Search games by name — used for the search bar
-export async function searchGames(query, limit = 10) {
-  return igdbFetch(
-    "games",
-    `
-    search "${query}";
-    fields name, slug, cover.image_id, first_release_date, genres.name, platforms.name, summary;
-    limit ${limit};
-  `
-  );
+export async function searchGames(query, limit = 20) {
+  const safe = query.replace(/"/g, '\\"');
+
+  const [ranked, broad] = await Promise.all([
+    igdbFetch(
+      "games",
+      `search "${safe}";
+       fields name, slug, cover.image_id, first_release_date, genres.name, platforms.name, summary;
+       where category = 0;
+       limit ${limit};`
+    ),
+    igdbFetch(
+      "games",
+      `fields name, slug, cover.image_id, first_release_date, genres.name, platforms.name, summary;
+       where name ~ *"${safe}"* & category = 0;
+       sort total_rating_count desc;
+       limit ${limit};`
+    ),
+  ]);
+
+  const seen = new Set();
+  const merged = [];
+  for (const game of [...ranked, ...broad]) {
+    if (!seen.has(game.id)) {
+      seen.add(game.id);
+      merged.push(game);
+    }
+  }
+  return merged.slice(0, limit);
 }
 
 // Get a single game by its IGDB slug — used for game detail pages
@@ -131,6 +150,19 @@ export async function getPopularGames(limit = 20) {
   );
 }
 
+
+export async function getRecentGames(limit = 20) {
+  const now = Math.floor(Date.now() / 1000);
+  return igdbFetch(
+    "games",
+    `
+    fields name, slug, cover.image_id, genres.name, platforms.name, first_release_date, total_rating;
+    where first_release_date < ${now} & cover.image_id != null & category = 0 & total_rating_count > 5;
+    sort first_release_date desc;
+    limit ${limit};
+  `
+  );
+}
 
 // Find a game by name — used by the bot to match Discord Rich Presence game names
 const nameMatchCache = new Map();
