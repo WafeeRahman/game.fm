@@ -52,15 +52,30 @@ export function igdbImageUrl(imageId, size = "cover_big") {
   return `https://images.igdb.com/igdb/image/upload/t_${size}/${imageId}.jpg`;
 }
 
+const ALLOWED_CATEGORIES = new Set([0, 8, 9, 10]);
+
+const EDITION_PATTERN =
+  /\b(collector'?s?|deluxe|premium|ultimate|limited|gold|legendary|digital|standard|goty|game of the year|definitive|special)\s*(edition|bundle|pack)\b/i;
+
+function filterGames(games) {
+  return games.filter(
+    (g) =>
+      (g.category == null || ALLOWED_CATEGORIES.has(g.category)) &&
+      g.version_parent == null &&
+      !EDITION_PATTERN.test(g.name)
+  );
+}
+
 export async function searchGames(query, limit = 20, offset = 0) {
   const safe = query.replace(/"/g, '\\"');
-  const fields = "name, slug, cover.image_id, first_release_date, genres.name, platforms.name, summary";
+  const fields = "name, slug, cover.image_id, first_release_date, genres.name, platforms.name, summary, category";
+  const fetchLimit = limit + 20;
 
   const [ranked, broad] = await Promise.all([
-    igdbFetch("games", `search "${safe}"; fields ${fields}, total_rating_count; limit ${limit}; offset ${offset};`)
-      .catch(() => []),
-    igdbFetch("games", `fields ${fields}, total_rating_count; where name ~ *"${safe}"*; sort total_rating_count desc; limit ${limit}; offset ${offset};`)
-      .catch(() => []),
+    igdbFetch("games", `search "${safe}"; fields ${fields}, total_rating_count; limit ${fetchLimit}; offset ${offset};`)
+      .catch((e) => { console.error("IGDB ranked search failed:", e.message); return []; }),
+    igdbFetch("games", `fields ${fields}, total_rating_count; where name ~ *"${safe}"*; sort total_rating_count desc; limit ${fetchLimit}; offset ${offset};`)
+      .catch((e) => { console.error("IGDB broad search failed:", e.message); return []; }),
   ]);
 
   const seen = new Set();
@@ -71,36 +86,41 @@ export async function searchGames(query, limit = 20, offset = 0) {
       merged.push(game);
     }
   }
-  merged.sort((a, b) => (b.total_rating_count ?? 0) - (a.total_rating_count ?? 0));
-  return merged.slice(0, limit);
+
+  return filterGames(merged)
+    .sort((a, b) => (b.total_rating_count ?? 0) - (a.total_rating_count ?? 0))
+    .slice(0, limit);
 }
 
 export async function getPopularGames(limit = 20, offset = 0) {
-  return igdbFetch(
+  const fetchLimit = limit + 20;
+  const results = await igdbFetch(
     "games",
     `
-    fields name, slug, cover.image_id, genres.name, platforms.name, total_rating, total_rating_count;
+    fields name, slug, cover.image_id, genres.name, platforms.name, total_rating, total_rating_count, category;
     where total_rating_count > 200 & cover.image_id != null;
     sort total_rating desc;
-    limit ${limit};
+    limit ${fetchLimit};
     offset ${offset};
   `
   );
+  return filterGames(results).slice(0, limit);
 }
-
 
 export async function getRecentGames(limit = 20, offset = 0) {
   const now = Math.floor(Date.now() / 1000);
-  return igdbFetch(
+  const fetchLimit = limit + 20;
+  const results = await igdbFetch(
     "games",
     `
-    fields name, slug, cover.image_id, genres.name, platforms.name, first_release_date, total_rating;
+    fields name, slug, cover.image_id, genres.name, platforms.name, first_release_date, total_rating, category;
     where first_release_date < ${now} & cover.image_id != null & total_rating_count > 5;
     sort first_release_date desc;
-    limit ${limit};
+    limit ${fetchLimit};
     offset ${offset};
   `
   );
+  return filterGames(results).slice(0, limit);
 }
 
 // Get a single game by its IGDB slug — used for game detail pages
@@ -166,7 +186,7 @@ export async function findGameByName(name) {
 
   const results = await igdbFetch(
     "games",
-    `search "${key}"; fields id,name,slug,cover.image_id,involved_companies.developer,involved_companies.company.name,genres.name,platforms.name,total_rating,first_release_date; where version_parent = null; limit 3;`
+    `search "${key}"; fields id,name,slug,cover.image_id,involved_companies.developer,involved_companies.company.name,genres.name,platforms.name,total_rating,first_release_date; limit 3;`
   );
 
   const exact = results?.find((g) => g.name.toLowerCase() === key);
