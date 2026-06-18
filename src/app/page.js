@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { auth } from "@/auth";
-import { getFeed } from "@/lib/feed";
+import { getFeed, getGlobalFeed } from "@/lib/feed";
 import { getPopularGames, igdbImageUrl } from "@/lib/igdb";
 import SpoilerText from "@/components/SpoilerText";
 
@@ -79,15 +79,40 @@ function FeedItem({ log }) {
   );
 }
 
-export default async function HomePage() {
+export default async function HomePage({ searchParams }) {
   const session = await auth();
+  const { tab } = await searchParams;
 
   if (session?.user) {
-    const feed = await getFeed(session.user.id);
+    const activeTab = tab === "everyone" ? "everyone" : "following";
+    const feed = activeTab === "everyone"
+      ? await getGlobalFeed()
+      : await getFeed(session.user.id);
 
     return (
       <div className="max-w-2xl mx-auto px-4 py-10">
-        <h1 className="text-xl font-bold text-white mb-6">Activity</h1>
+        <div className="flex items-center gap-6 mb-6">
+          <Link
+            href="/?tab=following"
+            className={`text-lg font-bold transition-colors ${
+              activeTab === "following"
+                ? "text-white"
+                : "text-white/30 hover:text-white/60"
+            }`}
+          >
+            Following
+          </Link>
+          <Link
+            href="/?tab=everyone"
+            className={`text-lg font-bold transition-colors ${
+              activeTab === "everyone"
+                ? "text-white"
+                : "text-white/30 hover:text-white/60"
+            }`}
+          >
+            Everyone
+          </Link>
+        </div>
 
         {feed.length > 0 ? (
           <div className="border border-white/5 rounded-xl px-4 divide-y divide-white/5">
@@ -97,16 +122,30 @@ export default async function HomePage() {
           </div>
         ) : (
           <div className="text-center py-20 border border-white/5 rounded-xl">
-            <p className="text-white/40 text-sm">No activity yet.</p>
-            <p className="text-white/25 text-xs mt-2">
-              Follow other players to see what they&apos;re playing.
-            </p>
-            <Link
-              href="/games"
-              className="text-violet-400 hover:text-violet-300 text-sm mt-4 inline-block transition-colors"
-            >
-              Search for games →
-            </Link>
+            {activeTab === "following" ? (
+              <>
+                <p className="text-white/40 text-sm">No activity yet.</p>
+                <p className="text-white/25 text-xs mt-2">
+                  Follow other players to see what they&apos;re playing.
+                </p>
+                <Link
+                  href="/?tab=everyone"
+                  className="text-violet-400 hover:text-violet-300 text-sm mt-4 inline-block transition-colors"
+                >
+                  See what everyone&apos;s playing →
+                </Link>
+              </>
+            ) : (
+              <>
+                <p className="text-white/40 text-sm">No activity on the platform yet.</p>
+                <Link
+                  href="/games"
+                  className="text-violet-400 hover:text-violet-300 text-sm mt-4 inline-block transition-colors"
+                >
+                  Be the first to log a game →
+                </Link>
+              </>
+            )}
           </div>
         )}
       </div>

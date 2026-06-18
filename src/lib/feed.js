@@ -35,6 +35,30 @@ export async function getFeed(userId, limit = 30) {
   });
 }
 
+// Global activity feed — recent public logs from all users
+export async function getGlobalFeed(limit = 30) {
+  return prisma.gameLog.findMany({
+    where: { isPublic: true },
+    orderBy: { updatedAt: "desc" },
+    take: limit,
+    select: {
+      id: true,
+      status: true,
+      rating: true,
+      review: true,
+      isSpoiler: true,
+      updatedAt: true,
+      _count: { select: { likes: true } },
+      user: {
+        select: { id: true, username: true, name: true, image: true },
+      },
+      game: {
+        select: { id: true, title: true, slug: true, coverUrl: true },
+      },
+    },
+  });
+}
+
 // Get popular games for the logged-out home page
 export async function getPopularLoggedGames(limit = 20) {
   const result = await prisma.gameLog.groupBy({
