@@ -57,20 +57,21 @@ export async function searchGames(query, limit = 20) {
   const fields = "name, slug, cover.image_id, first_release_date, genres.name, platforms.name, summary";
 
   const [ranked, broad] = await Promise.all([
-    igdbFetch("games", `search "${safe}"; fields ${fields}; limit ${limit};`)
+    igdbFetch("games", `search "${safe}"; fields ${fields}, total_rating_count; limit ${limit};`)
       .catch(() => []),
-    igdbFetch("games", `fields ${fields}; where name ~ *"${safe}"*; sort total_rating_count desc; limit ${limit};`)
+    igdbFetch("games", `fields ${fields}, total_rating_count; where name ~ *"${safe}"*; sort total_rating_count desc; limit ${limit};`)
       .catch(() => []),
   ]);
 
   const seen = new Set();
   const merged = [];
-  for (const game of [...ranked, ...broad]) {
+  for (const game of [...broad, ...ranked]) {
     if (!seen.has(game.id)) {
       seen.add(game.id);
       merged.push(game);
     }
   }
+  merged.sort((a, b) => (b.total_rating_count ?? 0) - (a.total_rating_count ?? 0));
   return merged.slice(0, limit);
 }
 
