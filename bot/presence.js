@@ -3,9 +3,33 @@ import { reportPresence } from "./lib/db.js";
 // Deduplicate: if a user is in multiple guilds, only process once per update
 const processing = new Set();
 
+const EMULATORS = new Set([
+  "rpcs3", "pcsx2", "ppsspp", "cemu", "yuzu", "ryujinx",
+  "retroarch", "dolphin", "duckstation", "xenia", "citra",
+  "mesen", "mgba", "melonds", "vita3k",
+]);
+
+function extractGameName(activity) {
+  if (!activity) return null;
+  const name = activity.name?.trim();
+  if (!name) return null;
+
+  if (EMULATORS.has(name.toLowerCase())) {
+    const detail = activity.details?.trim();
+    if (detail) return detail;
+  }
+
+  if (name === "PlayStation" || name.startsWith("PS") && /^PS[345]$/.test(name)) {
+    const detail = activity.details?.trim();
+    if (detail) return detail;
+  }
+
+  return name;
+}
+
 function getPlayingActivity(presence) {
   if (!presence?.activities) return null;
-  return presence.activities.find((a) => a.type === 0) ?? null; // type 0 = Playing
+  return presence.activities.find((a) => a.type === 0) ?? null;
 }
 
 export async function handlePresenceUpdate(oldPresence, newPresence) {
@@ -16,13 +40,15 @@ export async function handlePresenceUpdate(oldPresence, newPresence) {
   const oldGame = getPlayingActivity(oldPresence);
   const newGame = getPlayingActivity(newPresence);
 
-  // Nothing changed
-  if (oldGame?.name === newGame?.name) return;
+  const oldName = extractGameName(oldGame);
+  const newName = extractGameName(newGame);
+
+  if (oldName === newName) return;
 
   processing.add(discordId);
 
   try {
-    const result = await reportPresence(discordId, newGame?.name ?? null);
+    const result = await reportPresence(discordId, newName);
 
     if (result.status === "unknown_user") return; // not a game.fm user
 
