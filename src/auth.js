@@ -10,11 +10,23 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     ...authConfig.callbacks,
 
-    async jwt({ token, user }) {
+    async jwt({ token, user, account, profile }) {
       if (user) {
         token.id = user.id;
         token.username = user.username;
         token.discordId = user.discordId;
+      }
+      if (account?.provider === "discord" && profile) {
+        const avatarUrl = profile.avatar
+          ? `https://cdn.discordapp.com/avatars/${profile.id}/${profile.avatar}.png`
+          : null;
+        if (avatarUrl) {
+          token.picture = avatarUrl;
+          await prisma.user.update({
+            where: { id: token.id },
+            data: { image: avatarUrl },
+          });
+        }
       }
       return token;
     },
