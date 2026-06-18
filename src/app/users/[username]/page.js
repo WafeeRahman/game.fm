@@ -245,6 +245,15 @@ export default async function UserProfilePage({ params }) {
                     </span>
                   )}
                 </div>
+                {log.review && (
+                  log.isSpoiler ? (
+                    <SpoilerText label="Spoiler review">
+                      <p className="text-xs text-white/40 mt-1 line-clamp-2">&ldquo;{log.review}&rdquo;</p>
+                    </SpoilerText>
+                  ) : (
+                    <p className="text-xs text-white/40 mt-1 line-clamp-2">&ldquo;{log.review}&rdquo;</p>
+                  )
+                )}
               </div>
 
               <span className="text-xs text-white/20 flex-shrink-0">

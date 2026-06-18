@@ -51,17 +51,6 @@ export default async function SignInPage() {
           </p>
         </div>
 
-        <p className="text-xs text-white/20 text-center mt-6">
-          Don&apos;t have a Discord account?{" "}
-          <a
-            href="https://discord.com/register"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-violet-400 hover:text-violet-300 transition-colors"
-          >
-            Create one
-          </a>
-        </p>
       </div>
     </div>
   );

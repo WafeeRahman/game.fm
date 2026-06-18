@@ -13,7 +13,7 @@ export default async function Navbar() {
       <div className="max-w-6xl mx-auto px-4 h-14 flex items-center gap-4">
         {/* Logo */}
         <Link
-          href="/"
+          href="/games"
           className="text-base font-bold tracking-tight text-white hover:text-white/80 transition-colors flex-shrink-0 mr-2"
         >
           game<span className="text-violet-400">.fm</span>

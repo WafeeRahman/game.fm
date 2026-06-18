@@ -16,6 +16,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.username = user.username;
         token.discordId = user.discordId;
       }
+      if (!token.username && token.id) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.id },
+          select: { username: true },
+        });
+        if (dbUser?.username) token.username = dbUser.username;
+      }
       if (account?.provider === "discord" && profile) {
         const avatarUrl = profile.avatar
           ? `https://cdn.discordapp.com/avatars/${profile.id}/${profile.avatar}.png`

@@ -50,9 +50,9 @@ export async function POST(request) {
     return Response.json({ imported: 0, message: "No games found in Steam library" });
   }
 
-  // 3. Sort by playtime so we import the most-played games first,
-  //    then take up to 500 to keep the import fast
+  // 3. Filter out unplayed games, sort by playtime, take up to 500
   const sorted = steamGames
+    .filter((g) => g.playtime_forever > 0)
     .sort((a, b) => b.playtime_forever - a.playtime_forever)
     .slice(0, 500);
 
@@ -80,8 +80,7 @@ export async function POST(request) {
       const game = await upsertGameFromData(match.game);
       const playtime = steamPlaytime[match.uid] ?? 0;
 
-      // Games with any playtime → PLAYING; unplayed → BACKLOG
-      const status = playtime > 0 ? "PLAYING" : "BACKLOG";
+      const status = "PLAYING";
 
       await prisma.gameLog.upsert({
         where: {
