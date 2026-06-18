@@ -1,4 +1,4 @@
-import SearchBar from "@/components/SearchBar";
+import DynamicSearchBar from "@/components/DynamicSearchBar";
 import LoadMoreGames from "@/components/LoadMoreGames";
 import { searchGames, getPopularGames, getRecentGames } from "@/lib/igdb";
 
@@ -20,7 +20,7 @@ export default async function GamesPage({ searchParams }) {
       <div className="max-w-6xl mx-auto px-4 py-10">
         <div className="flex flex-col items-center gap-4 mb-10">
           <h1 className="text-3xl font-bold text-white">Find a game</h1>
-          <SearchBar defaultValue={q} />
+          <DynamicSearchBar defaultValue={q} autoFocus />
         </div>
 
         {games.length > 0 ? (
@@ -56,7 +56,7 @@ export default async function GamesPage({ searchParams }) {
     <div className="max-w-6xl mx-auto px-4 py-10">
       <div className="flex flex-col items-center gap-4 mb-10">
         <h1 className="text-3xl font-bold text-white">Find a game</h1>
-        <SearchBar defaultValue="" />
+        <DynamicSearchBar defaultValue="" />
       </div>
 
       {popular.length > 0 && (
