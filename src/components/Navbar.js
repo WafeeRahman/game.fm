@@ -39,16 +39,18 @@ export default async function Navbar() {
         </div>
 
         {/* Search bar — fills middle space */}
-        <Link
-          href="/games"
-          className="flex-1 max-w-xs ml-auto flex items-center gap-2 bg-white/[0.04] hover:bg-white/[0.07] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white/30 hover:text-white/50 transition-all"
-        >
-          <Search className="w-3.5 h-3.5 flex-shrink-0" />
-          <span className="truncate">Search games...</span>
-          <kbd className="ml-auto text-[10px] text-white/20 bg-white/5 border border-white/[0.08] rounded px-1.5 py-0.5 hidden sm:block">
+        <form action="/games" method="GET" className="flex-1 max-w-xs ml-auto relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/30" />
+          <input
+            type="text"
+            name="q"
+            placeholder="Search games..."
+            className="w-full bg-white/[0.04] hover:bg-white/[0.07] focus:bg-white/[0.07] border border-white/[0.08] focus:border-violet-500/50 rounded-lg pl-9 pr-8 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none transition-all"
+          />
+          <kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-white/20 bg-white/5 border border-white/[0.08] rounded px-1.5 py-0.5 hidden sm:block pointer-events-none">
             /
           </kbd>
-        </Link>
+        </form>
 
         {/* Auth */}
         <div className="flex items-center gap-2 flex-shrink-0">
