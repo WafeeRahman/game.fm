@@ -29,12 +29,20 @@ export default async function Navbar() {
             Games
           </Link>
           {user && (
-            <Link
-              href={`/users/${user.username}`}
-              className="text-sm text-white/50 hover:text-white hover:bg-white/5 px-3 py-1.5 rounded-md transition-colors"
-            >
-              Profile
-            </Link>
+            <>
+              <Link
+                href="/"
+                className="text-sm text-white/50 hover:text-white hover:bg-white/5 px-3 py-1.5 rounded-md transition-colors"
+              >
+                Feed
+              </Link>
+              <Link
+                href={`/users/${user.username}`}
+                className="text-sm text-white/50 hover:text-white hover:bg-white/5 px-3 py-1.5 rounded-md transition-colors"
+              >
+                Profile
+              </Link>
+            </>
           )}
         </div>
 
