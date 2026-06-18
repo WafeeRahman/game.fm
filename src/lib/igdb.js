@@ -57,9 +57,9 @@ export async function searchGames(query, limit = 20) {
   const fields = "name, slug, cover.image_id, first_release_date, genres.name, platforms.name, summary";
 
   const [ranked, broad] = await Promise.all([
-    igdbFetch("games", `search "${safe}"; fields ${fields}; where category = 0; limit ${limit};`)
+    igdbFetch("games", `search "${safe}"; fields ${fields}; limit ${limit};`)
       .catch(() => []),
-    igdbFetch("games", `fields ${fields}; where name ~ *"${safe}"* & category = 0; sort total_rating_count desc; limit ${limit};`)
+    igdbFetch("games", `fields ${fields}; where name ~ *"${safe}"*; sort total_rating_count desc; limit ${limit};`)
       .catch(() => []),
   ]);
 
@@ -134,7 +134,7 @@ export async function getPopularGames(limit = 20) {
     "games",
     `
     fields name, slug, cover.image_id, genres.name, platforms.name, total_rating, total_rating_count;
-    where total_rating_count > 200 & cover.image_id != null & category = 0;
+    where total_rating_count > 200 & cover.image_id != null;
     sort total_rating desc;
     limit ${limit};
   `
@@ -148,7 +148,7 @@ export async function getRecentGames(limit = 20) {
     "games",
     `
     fields name, slug, cover.image_id, genres.name, platforms.name, first_release_date, total_rating;
-    where first_release_date < ${now} & cover.image_id != null & category = 0 & total_rating_count > 5;
+    where first_release_date < ${now} & cover.image_id != null & total_rating_count > 5;
     sort first_release_date desc;
     limit ${limit};
   `

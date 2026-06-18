@@ -27,22 +27,22 @@ export async function GET() {
       "Content-Type": "text/plain",
     };
 
-    const ranked = await fetch("https://api.igdb.com/v4/games", {
+    const noFilter = await fetch("https://api.igdb.com/v4/games", {
       method: "POST", headers, cache: "no-store",
-      body: `search "zelda"; fields name, slug; where category = 0; limit 3;`,
+      body: `search "zelda"; fields name, slug, category; limit 3;`,
     });
-    const rankedText = await ranked.text();
+    const noFilterText = await noFilter.text();
 
-    const broad = await fetch("https://api.igdb.com/v4/games", {
+    const withFilter = await fetch("https://api.igdb.com/v4/games", {
       method: "POST", headers, cache: "no-store",
-      body: `fields name, slug; where name ~ *"zelda"* & category = 0; sort total_rating_count desc; limit 3;`,
+      body: `search "zelda"; fields name, slug, category; where category = 0; limit 3;`,
     });
-    const broadText = await broad.text();
+    const withFilterText = await withFilter.text();
 
     return Response.json({
       twitchToken: "ok",
-      ranked: { status: ranked.status, body: ranked.ok ? JSON.parse(rankedText) : rankedText },
-      broad: { status: broad.status, body: broad.ok ? JSON.parse(broadText) : broadText },
+      noFilter: { status: noFilter.status, body: noFilter.ok ? JSON.parse(noFilterText) : noFilterText },
+      withFilter: { status: withFilter.status, body: withFilter.ok ? JSON.parse(withFilterText) : withFilterText },
     });
   } catch (e) {
     return Response.json({ error: e.message, stack: e.stack?.split("\n").slice(0, 3) });
