@@ -25,7 +25,7 @@ function FeedItem({ log }) {
         <div className="flex items-center gap-2 flex-wrap">
           <Link
             href={`/users/${log.user.username}`}
-            className="text-sm font-medium text-white hover:text-violet-300 transition-colors"
+            className="text-sm font-medium text-white hover:text-violet-300 transition-colors truncate max-w-[200px]"
           >
             {log.user.name ?? log.user.username}
           </Link>

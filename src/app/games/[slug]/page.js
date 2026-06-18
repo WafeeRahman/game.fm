@@ -254,7 +254,7 @@ export default async function GamePage({ params }) {
                       <div className="flex items-center gap-2 flex-wrap">
                         <a
                           href={`/users/${review.user.username}`}
-                          className="text-sm font-medium text-white hover:text-violet-300 transition-colors"
+                          className="text-sm font-medium text-white hover:text-violet-300 transition-colors truncate max-w-[200px]"
                         >
                           {review.user.name ?? review.user.username}
                         </a>
