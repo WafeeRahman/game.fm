@@ -14,6 +14,7 @@ export default async function SignInPage() {
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-white tracking-tight">
             game<span className="text-violet-400">.fm</span>
+            <span className="ml-2 text-xs font-medium text-violet-400 bg-violet-400/10 border border-violet-400/20 px-2 py-0.5 rounded-full uppercase tracking-wider align-middle">beta</span>
           </h1>
           <p className="text-white/40 text-sm mt-2">
             Track the games you play. Review them. Share them.

@@ -17,6 +17,7 @@ export default async function Navbar() {
           className="text-base font-bold tracking-tight text-white hover:text-white/80 transition-colors flex-shrink-0 mr-2"
         >
           game<span className="text-violet-400">.fm</span>
+            <span className="ml-1.5 text-[10px] font-medium text-violet-400 bg-violet-400/10 border border-violet-400/20 px-1.5 py-0.5 rounded-full uppercase tracking-wider">beta</span>
         </Link>
 
         {/* Nav links */}

@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 
 export const metadata = {
   title: {
-    default: "game.fm",
-    template: "%s — game.fm",
+    default: "game.fm (beta)",
+    template: "%s — game.fm (beta)",
   },
   description: "Track the games you play. Review them. Share them.",
 };
