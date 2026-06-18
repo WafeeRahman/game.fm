@@ -37,7 +37,7 @@ async function igdbFetch(endpoint, query) {
       "Content-Type": "text/plain",
     },
     body: query,
-    next: { revalidate: 3600 }, // cache IGDB responses for 1 hour (Next.js built-in)
+    cache: "no-store",
   });
 
   if (!res.ok) throw new Error(`IGDB error: ${res.status} on ${endpoint}`);
