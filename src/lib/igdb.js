@@ -60,13 +60,13 @@ export async function searchGames(query, limit = 20) {
       "games",
       `search "${safe}";
        fields name, slug, cover.image_id, first_release_date, genres.name, platforms.name, summary;
-       where category = 0;
+       where category = (0,8,9,10) & version_parent = null;
        limit ${limit};`
     ),
     igdbFetch(
       "games",
       `fields name, slug, cover.image_id, first_release_date, genres.name, platforms.name, summary;
-       where name ~ *"${safe}"* & category = 0;
+       where name ~ *"${safe}"* & category = (0,8,9,10) & version_parent = null;
        sort total_rating_count desc;
        limit ${limit};`
     ),
@@ -143,7 +143,7 @@ export async function getPopularGames(limit = 20) {
     "games",
     `
     fields name, slug, cover.image_id, genres.name, platforms.name, total_rating, total_rating_count;
-    where total_rating_count > 200 & cover.image_id != null & category = 0;
+    where total_rating_count > 200 & cover.image_id != null & category = (0,8,9,10) & version_parent = null;
     sort total_rating desc;
     limit ${limit};
   `
@@ -157,7 +157,7 @@ export async function getRecentGames(limit = 20) {
     "games",
     `
     fields name, slug, cover.image_id, genres.name, platforms.name, first_release_date, total_rating;
-    where first_release_date < ${now} & cover.image_id != null & category = 0 & total_rating_count > 5;
+    where first_release_date < ${now} & cover.image_id != null & category = (0,8,9,10) & version_parent = null & total_rating_count > 5;
     sort first_release_date desc;
     limit ${limit};
   `
@@ -173,7 +173,7 @@ export async function findGameByName(name) {
 
   const results = await igdbFetch(
     "games",
-    `search "${key}"; fields id,name,slug,cover.image_id,involved_companies.developer,involved_companies.company.name,genres.name,platforms.name,total_rating,first_release_date; where version_parent = null; limit 3;`
+    `search "${key}"; fields id,name,slug,cover.image_id,involved_companies.developer,involved_companies.company.name,genres.name,platforms.name,total_rating,first_release_date; where version_parent = null & category = (0,8,9,10); limit 3;`
   );
 
   const exact = results?.find((g) => g.name.toLowerCase() === key);
