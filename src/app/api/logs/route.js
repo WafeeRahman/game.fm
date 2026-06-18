@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { upsertGame } from "@/lib/games";
+import { checkReview } from "@/lib/content-filter";
 
 export async function POST(request) {
   const session = await auth();
@@ -23,6 +24,12 @@ export async function POST(request) {
   }
   if (review && typeof review === "string" && review.length > 2000) {
     return Response.json({ error: "Review must be 2000 characters or fewer" }, { status: 400 });
+  }
+  if (review) {
+    const filter = checkReview(review);
+    if (!filter.ok) {
+      return Response.json({ error: filter.reason }, { status: 422 });
+    }
   }
 
   const game = await upsertGame(igdbId);

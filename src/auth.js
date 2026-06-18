@@ -8,11 +8,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
 
   callbacks: {
-    // Make user id, username, and discordId available on the session object
-    session({ session, user }) {
-      session.user.id = user.id;
-      session.user.username = user.username;
-      session.user.discordId = user.discordId;
+    ...authConfig.callbacks,
+
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+        token.username = user.username;
+        token.discordId = user.discordId;
+      }
+      return token;
+    },
+
+    session({ session, token }) {
+      session.user.id = token.id;
+      session.user.username = token.username;
+      session.user.discordId = token.discordId;
       return session;
     },
   },

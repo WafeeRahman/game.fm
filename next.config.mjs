@@ -8,9 +8,12 @@ const nextConfig = {
         hostname: "images.igdb.com",
       },
       {
-        // Discord avatars
         protocol: "https",
         hostname: "cdn.discordapp.com",
+      },
+      {
+        protocol: "https",
+        hostname: "cdn.discord.com",
       },
     ],
   },
