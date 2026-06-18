@@ -54,22 +54,13 @@ export function igdbImageUrl(imageId, size = "cover_big") {
 
 export async function searchGames(query, limit = 20) {
   const safe = query.replace(/"/g, '\\"');
+  const fields = "name, slug, cover.image_id, first_release_date, genres.name, platforms.name, summary";
 
   const [ranked, broad] = await Promise.all([
-    igdbFetch(
-      "games",
-      `search "${safe}";
-       fields name, slug, cover.image_id, first_release_date, genres.name, platforms.name, summary;
-       where category = 0;
-       limit ${limit};`
-    ),
-    igdbFetch(
-      "games",
-      `fields name, slug, cover.image_id, first_release_date, genres.name, platforms.name, summary;
-       where name ~ *"${safe}"* & category = 0;
-       sort total_rating_count desc;
-       limit ${limit};`
-    ),
+    igdbFetch("games", `search "${safe}"; fields ${fields}; where category = 0; limit ${limit};`)
+      .catch(() => []),
+    igdbFetch("games", `fields ${fields}; where name ~ *"${safe}"* & category = 0; sort total_rating_count desc; limit ${limit};`)
+      .catch(() => []),
   ]);
 
   const seen = new Set();
