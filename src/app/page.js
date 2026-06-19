@@ -3,73 +3,80 @@ import Image from "next/image";
 import { auth } from "@/auth";
 import { getFeed, getGlobalFeed } from "@/lib/feed";
 import { getPopularGames, igdbImageUrl } from "@/lib/igdb";
-import SpoilerText from "@/components/SpoilerText";
 
-function FeedItem({ log }) {
-  const cover = log.game.coverUrl;
+function formatDur(mins) {
+  if (!mins) return null;
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  if (h === 0) return `${m}m`;
+  if (m === 0) return `${h}h`;
+  return `${h}h ${m}m`;
+}
+
+function timeAgo(date) {
+  const diff = Date.now() - new Date(date).getTime();
+  const mins = Math.floor(diff / 60000);
+  const hrs = Math.floor(mins / 60);
+  const days = Math.floor(hrs / 24);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  if (hrs < 24) return `${hrs}h ago`;
+  if (days < 7) return `${days}d ago`;
+  return new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+function FeedItem({ session: s }) {
+  const cover = s.game.coverUrl;
   return (
     <div className="flex items-start gap-4 py-4 border-b border-white/5 last:border-0">
-      {/* Cover */}
-      <Link href={`/games/${log.game.slug}`} className="flex-shrink-0">
+      <Link href={`/games/${s.game.slug}`} className="flex-shrink-0">
         <div className="relative w-10 h-14 rounded-lg overflow-hidden bg-white/5">
           {cover ? (
-            <Image src={cover} alt={log.game.title} fill className="object-cover" />
+            <Image src={cover} alt={s.game.title} fill className="object-cover" />
           ) : (
             <div className="absolute inset-0 bg-white/5" />
           )}
         </div>
       </Link>
 
-      {/* Info */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
           <Link
-            href={`/users/${log.user.username}`}
+            href={`/users/${s.user.username}`}
             className="text-sm font-medium text-white hover:text-violet-300 transition-colors truncate max-w-[200px]"
           >
-            {log.user.name ?? log.user.username}
+            {s.user.name ?? s.user.username}
           </Link>
-          <span className="text-xs text-white/30">
-            {log.status === "COMPLETED" ? "completed" :
-             log.status === "PLAYED" ? "played" :
-             log.status === "DROPPED" ? "dropped" :
-             log.status === "BACKLOG" ? "added to backlog" :
-             log.status === "WISHLIST" ? "wishlisted" : "is playing"}
-          </span>
+          {s.isNowPlaying ? (
+            <span className="text-xs text-green-400">is playing</span>
+          ) : (
+            <span className="text-xs text-white/30">played</span>
+          )}
           <Link
-            href={`/games/${log.game.slug}`}
+            href={`/games/${s.game.slug}`}
             className="text-sm text-white/80 hover:text-white transition-colors truncate"
           >
-            {log.game.title}
+            {s.game.title}
           </Link>
         </div>
-        <div className="flex items-center gap-3 mt-1 flex-wrap">
-          {log.rating && (
-            <span className="text-xs text-yellow-400">
-              {"★".repeat(log.rating)}{"☆".repeat(5 - log.rating)}
+        <div className="flex items-center gap-3 mt-1">
+          {s.isNowPlaying ? (
+            <span className="inline-flex items-center gap-1.5 text-xs text-green-400">
+              <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
+              {formatDur(Math.round((Date.now() - new Date(s.startedAt).getTime()) / 60000))}
             </span>
-          )}
-          {log.review && (
-            log.isSpoiler ? (
-              <SpoilerText label="Spoiler">
-                <span className="text-xs text-white/40 truncate max-w-xs">&ldquo;{log.review}&rdquo;</span>
-              </SpoilerText>
-            ) : (
-              <p className="text-xs text-white/40 truncate max-w-xs">&ldquo;{log.review}&rdquo;</p>
-            )
-          )}
-          <span className="text-xs text-white/20">
-            {new Date(log.updatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-          </span>
+          ) : s.durationMins ? (
+            <span className="text-xs text-violet-400">{formatDur(s.durationMins)}</span>
+          ) : null}
+          <span className="text-xs text-white/20">{timeAgo(s.startedAt)}</span>
         </div>
       </div>
 
-      {/* Avatar */}
-      {log.user.image && (
-        <Link href={`/users/${log.user.username}`} className="flex-shrink-0">
+      {s.user.image && (
+        <Link href={`/users/${s.user.username}`} className="flex-shrink-0">
           <Image
-            src={log.user.image}
-            alt={log.user.name ?? log.user.username}
+            src={s.user.image}
+            alt={s.user.name ?? s.user.username}
             width={28}
             height={28}
             className="rounded-full"
@@ -117,8 +124,8 @@ export default async function HomePage({ searchParams }) {
 
         {feed.length > 0 ? (
           <div className="border border-white/5 rounded-xl px-4 divide-y divide-white/5">
-            {feed.map((log) => (
-              <FeedItem key={log.id} log={log} />
+            {feed.map((s) => (
+              <FeedItem key={s.id} session={s} />
             ))}
           </div>
         ) : (
