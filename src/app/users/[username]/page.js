@@ -15,6 +15,7 @@ export async function generateMetadata({ params }) {
 
 const STATUS_LABEL = {
   PLAYING: "Playing",
+  PLAYED: "Played",
   COMPLETED: "Completed",
   DROPPED: "Dropped",
   BACKLOG: "Backlog",

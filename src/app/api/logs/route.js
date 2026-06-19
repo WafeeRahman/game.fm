@@ -15,7 +15,7 @@ export async function POST(request) {
     return Response.json({ error: "igdbId and status are required" }, { status: 400 });
   }
 
-  const validStatuses = ["PLAYING", "COMPLETED", "DROPPED", "BACKLOG", "WISHLIST", "SHELVED"];
+  const validStatuses = ["PLAYING", "PLAYED", "COMPLETED", "DROPPED", "BACKLOG", "WISHLIST", "SHELVED"];
   if (!validStatuses.includes(status)) {
     return Response.json({ error: "Invalid status" }, { status: 400 });
   }
@@ -65,22 +65,23 @@ export async function POST(request) {
     },
   });
 
-  // 3. Record activity for the feed
-  await prisma.activity.upsert({
-    where: {
-      // re-use the same activity record if they update the log
-      id: `log-${log.id}`,
-    },
-    create: {
-      id: `log-${log.id}`,
-      userId: session.user.id,
-      type: "GAME_LOG",
-      referenceId: log.id,
-    },
-    update: {
-      createdAt: new Date(),
-    },
-  });
+  // Record activity for the feed (skip backlog/wishlist — not interesting)
+  if (status !== "BACKLOG" && status !== "WISHLIST") {
+    await prisma.activity.upsert({
+      where: {
+        id: `log-${log.id}`,
+      },
+      create: {
+        id: `log-${log.id}`,
+        userId: session.user.id,
+        type: "GAME_LOG",
+        referenceId: log.id,
+      },
+      update: {
+        createdAt: new Date(),
+      },
+    });
+  }
 
   return Response.json(log);
 }

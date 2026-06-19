@@ -56,7 +56,7 @@ export async function GET(request, { params }) {
       select: {
         startedAt: true,
         durationMins: true,
-        game: { select: { title: true, slug: true } },
+        game: { select: { title: true, slug: true, coverUrl: true } },
       },
     }),
   ]);
@@ -70,11 +70,13 @@ export async function GET(request, { params }) {
     nowPlaying: nowPlaying ? {
       title: nowPlaying.game.title,
       slug: nowPlaying.game.slug,
+      coverUrl: nowPlaying.game.coverUrl,
       startedAt: nowPlaying.startedAt,
     } : null,
     lastSession: lastSession ? {
       title: lastSession.game.title,
       slug: lastSession.game.slug,
+      coverUrl: lastSession.game.coverUrl,
       startedAt: lastSession.startedAt,
       durationMins: lastSession.durationMins,
     } : null,

@@ -107,6 +107,7 @@ model GameLog {
 
 enum GameStatus {
   PLAYING
+  PLAYED
   COMPLETED
   DROPPED
   BACKLOG

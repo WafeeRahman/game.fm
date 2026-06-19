@@ -50,6 +50,12 @@ export async function POST(request) {
       where: { id: openSession.id },
       data: { isNowPlaying: false, durationMins, endedAt: new Date() },
     });
+
+    // Move game log from PLAYING → PLAYED now that session ended
+    await prisma.gameLog.updateMany({
+      where: { userId, gameId: openSession.gameId, status: "PLAYING" },
+      data: { status: "PLAYED" },
+    });
   }
 
   // Open a new session if the user started a game

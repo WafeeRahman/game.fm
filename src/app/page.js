@@ -31,6 +31,7 @@ function FeedItem({ log }) {
           </Link>
           <span className="text-xs text-white/30">
             {log.status === "COMPLETED" ? "completed" :
+             log.status === "PLAYED" ? "played" :
              log.status === "DROPPED" ? "dropped" :
              log.status === "BACKLOG" ? "added to backlog" :
              log.status === "WISHLIST" ? "wishlisted" : "is playing"}

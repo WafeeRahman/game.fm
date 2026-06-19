@@ -67,21 +67,21 @@ async function handleFm(interaction) {
 
   if (data.nowPlaying) {
     const elapsed = formatDur(Math.round((Date.now() - new Date(data.nowPlaying.startedAt).getTime()) / 60000));
-    return interaction.reply({
-      embeds: [embed(`▶ ${data.nowPlaying.title}`, `${BASE_URL}/games/${data.nowPlaying.slug}`)
-        .setDescription(`**${displayName}** is playing · ${elapsed} into session`)
-        .setFooter({ text: `game.fm · ${profileUrl(data.username)}` })],
-    });
+    const e = embed(`▶ ${data.nowPlaying.title}`, `${BASE_URL}/games/${data.nowPlaying.slug}`)
+      .setDescription(`**${displayName}** is playing · ${elapsed} into session`)
+      .setFooter({ text: `game.fm · ${profileUrl(data.username)}` });
+    if (data.nowPlaying.coverUrl) e.setThumbnail(data.nowPlaying.coverUrl);
+    return interaction.reply({ embeds: [e] });
   }
 
   if (data.lastSession) {
     const ago = timeAgo(data.lastSession.startedAt);
     const dur = formatDur(data.lastSession.durationMins);
-    return interaction.reply({
-      embeds: [embed(data.lastSession.title, `${BASE_URL}/games/${data.lastSession.slug}`)
-        .setDescription(`**${displayName}** last played · ${ago} · ${dur}`)
-        .setFooter({ text: `game.fm · ${profileUrl(data.username)}` })],
-    });
+    const e = embed(data.lastSession.title, `${BASE_URL}/games/${data.lastSession.slug}`)
+      .setDescription(`**${displayName}** last played · ${ago} · ${dur}`)
+      .setFooter({ text: `game.fm · ${profileUrl(data.username)}` });
+    if (data.lastSession.coverUrl) e.setThumbnail(data.lastSession.coverUrl);
+    return interaction.reply({ embeds: [e] });
   }
 
   interaction.reply(`**${displayName}** hasn't played anything yet.`);

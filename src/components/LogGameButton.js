@@ -6,6 +6,7 @@ import { X } from "lucide-react";
 
 const STATUSES = [
   { value: "PLAYING",   label: "Playing",   color: "text-blue-400" },
+  { value: "PLAYED",    label: "Played",    color: "text-cyan-400" },
   { value: "COMPLETED", label: "Completed", color: "text-green-400" },
   { value: "DROPPED",   label: "Dropped",   color: "text-red-400" },
   { value: "BACKLOG",   label: "Backlog",   color: "text-white/60" },

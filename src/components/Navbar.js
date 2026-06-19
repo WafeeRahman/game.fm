@@ -28,6 +28,12 @@ export default async function Navbar() {
           >
             Games
           </Link>
+          <Link
+            href="/users"
+            className="text-sm text-white/50 hover:text-white hover:bg-white/5 px-3 py-1.5 rounded-md transition-colors"
+          >
+            Users
+          </Link>
           {user && (
             <>
               <Link
