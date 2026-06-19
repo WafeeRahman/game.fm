@@ -32,19 +32,30 @@ export default async function SettingsPage() {
         {/* Steam */}
         <section className="border border-white/10 rounded-xl p-6">
           <div className="flex items-center justify-between mb-1">
-            <h2 className="text-base font-semibold text-white">Steam Library</h2>
+            <h2 className="text-base font-semibold text-white">Steam Sync</h2>
             {user?.steamId && (
               <span className="text-xs text-green-400 bg-green-400/10 border border-green-400/20 px-2 py-0.5 rounded-full">
                 Connected
               </span>
             )}
           </div>
-          <p className="text-sm text-white/40 mb-5">
-            Import your Steam library. Games you&apos;ve played will be marked as{" "}
-            <span className="text-violet-400">Playing</span>, unplayed ones as{" "}
-            <span className="text-white/60">Backlog</span>. Existing logs won&apos;t be overwritten.
-          </p>
-          <SteamImport />
+          {user?.steamId ? (
+            <p className="text-sm text-white/40">
+              Your Steam library has been synced. New games are tracked
+              automatically via Discord rich presence.
+            </p>
+          ) : (
+            <>
+              <p className="text-sm text-white/40 mb-5">
+                One-time sync of your Steam library. Recently played games are marked{" "}
+                <span className="text-blue-400">Playing</span>, older ones{" "}
+                <span className="text-cyan-400">Played</span>, and unplayed ones{" "}
+                <span className="text-white/60">Backlog</span>. After this, new games
+                are tracked via Discord rich presence.
+              </p>
+              <SteamImport />
+            </>
+          )}
         </section>
 
         {/* Account */}

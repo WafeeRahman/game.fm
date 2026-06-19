@@ -9,7 +9,7 @@ export default function SteamImport() {
   const [status, setStatus] = useState("idle"); // idle | loading | done | error
   const [result, setResult] = useState(null);
 
-  async function handleImport(e) {
+  async function handleSync(e) {
     e.preventDefault();
     if (!input.trim()) return;
 
@@ -35,12 +35,12 @@ export default function SteamImport() {
   }
 
   return (
-    <form onSubmit={handleImport} className="flex flex-col gap-4">
+    <form onSubmit={handleSync} className="flex flex-col gap-4">
       <input
         type="text"
         value={input}
         onChange={(e) => setInput(e.target.value)}
-        placeholder="76561198XXXXXXXXX or steamcommunity.com/id/yourname"
+        placeholder="steamcommunity.com/id/yourname or Steam ID"
         disabled={status === "loading"}
         className="bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-violet-500 disabled:opacity-50 transition-colors"
       />
@@ -50,10 +50,9 @@ export default function SteamImport() {
         disabled={status === "loading" || !input.trim()}
         className="self-start bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
       >
-        {status === "loading" ? "Importing..." : "Import library"}
+        {status === "loading" ? "Syncing..." : "Sync library"}
       </button>
 
-      {/* Result */}
       {status === "done" && result && (
         <div className="text-sm text-green-400 bg-green-400/10 border border-green-400/20 rounded-lg px-4 py-3">
           ✓ {result.message} ({result.matched} matched from {result.total} Steam games)

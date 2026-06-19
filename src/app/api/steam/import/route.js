@@ -50,9 +50,8 @@ export async function POST(request) {
     return Response.json({ imported: 0, message: "No games found in Steam library" });
   }
 
-  // 3. Filter out unplayed games, sort by playtime, take up to 500
+  // 3. Sort by playtime, take up to 500
   const sorted = steamGames
-    .filter((g) => g.playtime_forever > 0)
     .sort((a, b) => b.playtime_forever - a.playtime_forever)
     .slice(0, 500);
 
@@ -66,21 +65,28 @@ export async function POST(request) {
     igdbMatches.push(...results);
   }
 
-  // Build a map: steamAppId -> { igdbGame, playtimeMins }
-  const steamPlaytime = Object.fromEntries(
-    sorted.map((g) => [String(g.appid), g.playtime_forever])
+  // Build maps: steamAppId -> playtime and recent activity
+  const steamData = Object.fromEntries(
+    sorted.map((g) => [String(g.appid), {
+      playtime: g.playtime_forever,
+      recentPlaytime: g.playtime_2weeks ?? 0,
+    }])
   );
 
   // 5. Save matched games to our DB and create GameLog entries
-  let imported = 0;
+  let synced = 0;
   for (const match of igdbMatches) {
     if (!match.game?.id || !match.game?.slug) continue;
 
     try {
       const game = await upsertGameFromData(match.game);
-      const playtime = steamPlaytime[match.uid] ?? 0;
+      const info = steamData[match.uid] ?? { playtime: 0, recentPlaytime: 0 };
 
-      const status = "PLAYING";
+      const status = info.recentPlaytime > 0
+        ? "PLAYING"
+        : info.playtime > 0
+          ? "PLAYED"
+          : "BACKLOG";
 
       await prisma.gameLog.upsert({
         where: {
@@ -91,13 +97,11 @@ export async function POST(request) {
           gameId: game.id,
           status,
         },
-        // Don't overwrite an existing log the user may have edited manually
         update: {},
       });
 
-      imported++;
+      synced++;
     } catch {
-      // Skip games that fail — don't abort the whole import
       continue;
     }
   }
@@ -109,9 +113,9 @@ export async function POST(request) {
   });
 
   return Response.json({
-    imported,
+    synced,
     total: steamGames.length,
     matched: igdbMatches.length,
-    message: `Imported ${imported} games from Steam`,
+    message: `Synced ${synced} games from Steam`,
   });
 }
