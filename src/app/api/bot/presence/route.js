@@ -82,6 +82,11 @@ export async function POST(request) {
       update: {},
     });
 
+    await prisma.gameLog.updateMany({
+      where: { userId, gameId: game.id, status: { in: ["BACKLOG", "WISHLIST"] } },
+      data: { status: "PLAYING" },
+    });
+
     return Response.json({ status: "session_opened", game: igdbGame.name });
   }
 
