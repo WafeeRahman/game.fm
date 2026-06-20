@@ -76,6 +76,12 @@ export async function POST(request) {
       },
     });
 
+    await prisma.gameLog.upsert({
+      where: { userId_gameId: { userId, gameId: game.id } },
+      create: { userId, gameId: game.id, status: "PLAYING" },
+      update: {},
+    });
+
     return Response.json({ status: "session_opened", game: igdbGame.name });
   }
 
