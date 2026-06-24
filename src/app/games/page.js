@@ -14,7 +14,7 @@ export default async function GamesPage({ searchParams }) {
     try {
       games = await searchGames(q, 20);
     } catch (e) {
-      console.error("IGDB search failed:", e.message);
+      console.error("IGDB search failed:", e.message, "\n", e.stack);
     }
     return (
       <div className="max-w-6xl mx-auto px-4 py-10">
@@ -49,7 +49,7 @@ export default async function GamesPage({ searchParams }) {
       getRecentGames(10),
     ]);
   } catch (e) {
-    console.error("IGDB fetch failed:", e.message);
+    console.error("IGDB fetch failed:", e.message, "\n", e.stack);
   }
 
   return (

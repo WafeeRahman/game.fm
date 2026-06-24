@@ -14,7 +14,12 @@ async function getAccessToken() {
     { method: "POST" }
   );
 
-  if (!res.ok) throw new Error(`Twitch token error: ${res.status}`);
+  if (!res.ok) {
+    const body = await res.text().catch(() => "(unreadable body)");
+    throw new Error(
+      `Twitch token error: status=${res.status} body=${body}`
+    );
+  }
 
   const data = await res.json();
 
@@ -40,7 +45,12 @@ async function igdbFetch(endpoint, query) {
     cache: "no-store",
   });
 
-  if (!res.ok) throw new Error(`IGDB error: ${res.status} on ${endpoint}`);
+  if (!res.ok) {
+    const body = await res.text().catch(() => "(unreadable body)");
+    throw new Error(
+      `IGDB error: status=${res.status} endpoint=${endpoint} query=${query} body=${body}`
+    );
+  }
 
   return res.json();
 }
